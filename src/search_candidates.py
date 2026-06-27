@@ -16,9 +16,10 @@ with open(
 ) as f:
     resume_names = pickle.load(f)
 
+k = min(2000, len(resume_names))
 scores, indices = index.search(
     jd_embedding.reshape(1, -1),
-    3
+    k
 )
 
 print("\nCandidate Ranking:\n")

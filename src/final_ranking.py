@@ -3,7 +3,7 @@ import faiss
 import pickle
 import os
 
-from extract_text import extract_text
+import sqlite3
 
 required_skills = [
     "python",
@@ -27,9 +27,10 @@ with open(
 ) as f:
     resume_names = pickle.load(f)
 
+k = min(2000, len(resume_names))
 scores, indices = index.search(
     jd_embedding.reshape(1, -1),
-    len(resume_names)
+    k
 )
 
 print("\nFinal Candidate Ranking:\n")
@@ -40,12 +41,12 @@ for i in range(len(indices[0])):
 
     resume_name = resume_names[idx]
 
-    text = extract_text(
-        os.path.join(
-            "data/resumes",
-            resume_name
-        )
-    ).lower()
+    conn = sqlite3.connect("data/candidates.db")
+    cursor = conn.cursor()
+    cursor.execute("SELECT skills FROM candidates WHERE id=?", (resume_name,))
+    row = cursor.fetchone()
+    text = row[0].lower() if row else ""
+    conn.close()
 
     matched = 0
 
