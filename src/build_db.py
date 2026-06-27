@@ -51,17 +51,39 @@ def process_candidates():
             skills_list = data.get("skills", [])
             skills_text = ", ".join([s.get("name", "") if isinstance(s, dict) else str(s) for s in skills_list])
             
-            career_history = data.get("career_history", [])
-            career_text = " ".join([
-                f"{job.get('title', '')} at {job.get('company', '')}" 
-                for job in career_history
-            ])
+            # Combine everything for embedding - Headline and Summary
+            profile_text = f"Headline: {headline}. Summary: {summary}."
             
-            # Combine everything for embedding
-            full_text = f"{headline}. {summary}. Skills: {skills_text}. Experience: {career_text}"
+            # Skills details with proficiency
+            skills_text = ", ".join([f"{s.get('name', '')} ({s.get('proficiency', '')})" if isinstance(s, dict) else str(s) for s in skills_list])
+            
+            # Career history with titles, companies, and descriptions (accomplishments)
+            career_history = data.get("career_history", [])
+            career_jobs = []
+            for job in career_history:
+                job_desc = job.get('description', '') or ""
+                # Strip out newlines/extra spaces to keep clean
+                job_desc_clean = " ".join(job_desc.split())
+                job_str = f"Role: {job.get('title', '')} at {job.get('company', '')} for {job.get('duration_months', 0)} months. Accomplishments: {job_desc_clean}"
+                career_jobs.append(job_str)
+            career_text = " | ".join(career_jobs)
+            
+            # Education details
+            edu_list = data.get("education", [])
+            edu_items = []
+            for edu in edu_list:
+                edu_items.append(f"{edu.get('degree', '')} in {edu.get('field_of_study', '')} from {edu.get('institution', '')} (Grade: {edu.get('grade', '')})")
+            edu_text = ", ".join(edu_items)
+            
+            # Certifications
+            certs = data.get("certifications", [])
+            cert_text = ", ".join([str(c) for c in certs])
+            
+            # Combined Rich Text
+            full_text = f"{profile_text} Skills: {skills_text}. Experience: {career_text}. Education: {edu_text}. Certifications: {cert_text}."
             
             # Keep skills field for faster skill matching later
-            skills_lower = skills_text.lower()
+            skills_lower = ", ".join([s.get("name", "") if isinstance(s, dict) else str(s) for s in skills_list]).lower()
             
             batch.append((candidate_id, full_text, skills_lower))
             

@@ -9,12 +9,9 @@ def train_ranker():
     # Sort by relevance just to be safe, though group handles it
     df = df.sort_values(by="relevance", ascending=False).reset_index(drop=True)
     
-    features = [
-        "rrf_score", "skill_score", "yoe", "ai_years", 
-        "job_hopping_index", "github_score", "education_tier", "notice_period",
-        "company_fit_score", "career_trajectory_score", "behavioral_score",
-        "location_match", "honeypot_flag"
-    ]
+    # Dynamically extract all features except metadata columns
+    exclude = {"candidate_id", "full_text", "teacher_score", "relevance"}
+    features = [col for col in df.columns if col not in exclude]
     
     X = df[features]
     y = df["relevance"]

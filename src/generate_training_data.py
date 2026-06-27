@@ -30,16 +30,14 @@ def generate_training_data():
     placeholders = ",".join(["?"] * len(candidate_ids))
     query = f"""
         SELECT 
-            c.id, c.skills, c.full_text,
-            f.yoe, f.ai_years, f.job_hopping_index, f.github_score, 
-            f.education_tier, f.notice_period_days, f.recruiter_response_rate,
-            f.company_fit_score, f.career_trajectory_score, f.behavioral_score,
-            f.location_match, f.honeypot_flag
+            c.id, c.skills, c.full_text, f.*
         FROM candidates c
         LEFT JOIN candidate_features f ON c.id = f.candidate_id
         WHERE c.id IN ({placeholders})
     """
     df = pd.read_sql_query(query, conn, params=candidate_ids)
+    # Remove duplicate candidate_id column if present from f.*
+    df = df.loc[:, ~df.columns.duplicated()]
     conn.close()
     
     print("\nLoading CrossEncoder for Knowledge Distillation (Local Inference)...")
@@ -58,27 +56,29 @@ def generate_training_data():
         row = row.iloc[0]
         text = str(row["skills"]).lower()
         matched = sum(1 for skill in required_skills if skill in text)
-        skill_score = matched / len(required_skills)
+        skill_score = matched / len(required_skills) if required_skills else 0.0
         
         full_text = str(row["full_text"])[:1000]
         
-        dataset.append({
+        # Build features dict dynamically from row
+        feat_dict = {
             "candidate_id": cand_id,
             "full_text": full_text,
             "rrf_score": score,
             "skill_score": skill_score,
-            "yoe": float(row["yoe"]),
-            "ai_years": float(row["ai_years"]),
-            "job_hopping_index": float(row["job_hopping_index"]),
-            "github_score": float(row["github_score"]),
-            "education_tier": int(row["education_tier"]),
-            "notice_period": int(row["notice_period_days"]),
-            "company_fit_score": float(row["company_fit_score"]),
-            "career_trajectory_score": float(row["career_trajectory_score"]),
-            "behavioral_score": float(row["behavioral_score"]),
-            "location_match": int(row["location_match"]),
-            "honeypot_flag": int(row["honeypot_flag"])
-        })
+        }
+        
+        # Copy over all numeric features from SQL
+        exclude_cols = {'id', 'skills', 'full_text', 'candidate_id'}
+        for col in df.columns:
+            if col not in exclude_cols:
+                val = row[col]
+                # Convert nulls to 0 or appropriate default
+                if pd.isna(val):
+                    val = 3.0 if col == 'education_tier' else 0.0
+                feat_dict[col] = val
+                
+        dataset.append(feat_dict)
         
     final_df = pd.DataFrame(dataset)
     

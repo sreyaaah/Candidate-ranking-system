@@ -22,6 +22,8 @@ def embed_candidates():
     total_candidates = cursor.fetchone()[0]
     
     cursor.execute("SELECT id, full_text FROM candidates")
+    rows = cursor.fetchall()
+    conn.close()
     
     embeddings = []
     resume_names = []
@@ -31,13 +33,11 @@ def embed_candidates():
     batch_texts = []
     
     print(f"Generating embeddings for {total_candidates} candidates locally...")
-    print("This may take 1-2 hours depending on your CPU, but it is 100% free and unlimited!")
+    print("This may take a few minutes on CPU...")
     
-    for row in tqdm(cursor, total=total_candidates):
-        cand_id, text = row
-        
+    for cand_id, text in tqdm(rows, total=total_candidates):
         # BGE models use this prefix for retrieving relevant passages
-        query = "Represent this sentence for searching relevant passages: " + text[:4000]
+        query = "Represent this sentence for searching relevant passages: " + str(text)[:4000]
         
         batch_ids.append(cand_id)
         batch_texts.append(query)
@@ -52,9 +52,6 @@ def embed_candidates():
             embeddings.extend(batch_embeddings)
             resume_names.extend(batch_ids)
             
-            batch_texts = []
-            batch_ids = []
-            
     # Process remaining
     if batch_texts:
         batch_embeddings = model.encode(
@@ -64,8 +61,6 @@ def embed_candidates():
         )
         embeddings.extend(batch_embeddings)
         resume_names.extend(batch_ids)
-
-    conn.close()
     
     embeddings_np = np.array(embeddings, dtype=np.float32)
     

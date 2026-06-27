@@ -37,35 +37,20 @@ def main():
     placeholders = ",".join(["?"] * len(candidate_ids))
     query = f"""
         SELECT 
-            c.id, c.skills, c.full_text,
-            f.yoe, f.ai_years, f.job_hopping_index, f.github_score, 
-            f.education_tier, f.notice_period_days, f.recruiter_response_rate,
-            f.company_fit_score, f.career_trajectory_score, f.behavioral_score,
-            f.location_match, f.honeypot_flag
+            c.id, c.skills, c.full_text, f.*
         FROM candidates c
         LEFT JOIN candidate_features f ON c.id = f.candidate_id
         WHERE c.id IN ({placeholders})
     """
     cursor.execute(query, candidate_ids)
     
+    # Fetch all descriptions to get column headers
+    col_names = [description[0] for description in cursor.description]
+    
     features_map = {}
     for row in cursor.fetchall():
-        features_map[row[0]] = {
-            "skills": row[1].lower() if row[1] else "",
-            "full_text": row[2] or "",
-            "yoe": row[3] or 0.0,
-            "ai_years": row[4] or 0.0,
-            "job_hopping_index": row[5] or 0.0,
-            "github_score": row[6] or 0.0,
-            "education_tier": row[7] or 3,
-            "notice_period": row[8] or 0,
-            "response_rate": row[9] or 0.0,
-            "company_fit_score": row[10] or 0.0,
-            "career_trajectory_score": row[11] or 0.0,
-            "behavioral_score": row[12] or 0.0,
-            "location_match": row[13] or 0,
-            "honeypot_flag": row[14] or 0
-        }
+        row_dict = dict(zip(col_names, row))
+        features_map[row_dict["id"]] = row_dict
     conn.close()
     
     dataset = []
@@ -74,31 +59,30 @@ def main():
         # --- Honeypot Filtering ---
         if feats.get("honeypot_flag", 0) == 1: continue
         
-        text = feats.get("skills", "")
+        text = str(feats.get("skills", "")).lower()
         
         matched_skills = [skill for skill in required_skills if skill in text]
         missing_skills = [skill for skill in required_skills if skill not in text]
-        skill_score = len(matched_skills) / len(required_skills) if required_skills else 0
+        skill_score = len(matched_skills) / len(required_skills) if required_skills else 0.0
             
-        dataset.append({
+        feat_dict = {
             "candidate_id": cand_id,
             "full_text": feats.get("full_text", ""),
             "rrf_score": rrf_score,
             "skill_score": skill_score,
             "matched_skills": matched_skills,
-            "missing_skills": missing_skills,
-            "yoe": feats.get("yoe", 0.0),
-            "ai_years": feats.get("ai_years", 0.0),
-            "job_hopping_index": feats.get("job_hopping_index", 0.0),
-            "github_score": feats.get("github_score", 0.0),
-            "education_tier": feats.get("education_tier", 3),
-            "notice_period": feats.get("notice_period", 0),
-            "company_fit_score": feats.get("company_fit_score", 0.0),
-            "career_trajectory_score": feats.get("career_trajectory_score", 0.0),
-            "behavioral_score": feats.get("behavioral_score", 0.0),
-            "location_match": feats.get("location_match", 0),
-            "honeypot_flag": feats.get("honeypot_flag", 0)
-        })
+            "missing_skills": missing_skills
+        }
+        
+        # Copy over all numeric features from SQL mapped dict
+        exclude_cols = {'id', 'skills', 'full_text', 'candidate_id'}
+        for col, val in feats.items():
+            if col not in exclude_cols:
+                if pd.isna(val) or val is None:
+                    val = 3.0 if col == 'education_tier' else 0.0
+                feat_dict[col] = val
+                
+        dataset.append(feat_dict)
         
     df = pd.DataFrame(dataset)
     
@@ -106,12 +90,10 @@ def main():
     print("Loading XGBoost Ranker model...")
     ranker = xgb.XGBRanker()
     ranker.load_model("models/xgb_ranker.json")
-    features = [
-        "rrf_score", "skill_score", "yoe", "ai_years", 
-        "job_hopping_index", "github_score", "education_tier", "notice_period",
-        "company_fit_score", "career_trajectory_score", "behavioral_score",
-        "location_match", "honeypot_flag"
-    ]
+    
+    exclude = {"candidate_id", "full_text", "matched_skills", "missing_skills", "ml_score", "ce_score", "norm_ml_score", "final_score", "score", "rank", "reasoning"}
+    features = [col for col in df.columns if col not in exclude]
+    
     X = df[features]
     df["ml_score"] = ranker.predict(X)
     
@@ -202,8 +184,8 @@ def main():
         reasoning += f"Highlights: {hl_str} | "
         
         risk = []
-        if row['notice_period'] > 60:
-            risk.append(f"High notice period ({row['notice_period']} days)")
+        if row['notice_period_days'] > 60:
+            risk.append(f"High notice period ({int(row['notice_period_days'])} days)")
         if row['job_hopping_index'] < 12 and row['yoe'] > 3:
             risk.append("Frequent job hopper")
             
