@@ -4,9 +4,12 @@ import numpy as np
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
 
+import config
+import torch
+
 print("Loading Job Description...")
 
-doc = Document("data/jobs/job_description.docx")
+doc = Document(config.JD_PATH)
 
 paragraphs = []
 for para in doc.paragraphs:
@@ -74,8 +77,36 @@ print("Section Classification Results:")
 for sec, count in classified_counts.items():
     print(f"  {sec:<18}: {count} paragraphs")
 
-print("\nLoading BGE model...")
-model = SentenceTransformer("BAAI/bge-base-en-v1.5")
+# --- Upgraded: Custom Query Expansion via Ontology Mapping ---
+from extract_skills import extract_required_skills, ONTOLOGY_MAP
+jd_combined_text = "\n".join(paragraphs)
+required_skills = extract_required_skills(jd_combined_text)
+
+expanded_terms = []
+for skill in required_skills:
+    # Append child technologies to increase dense semantic match recall
+    children = ONTOLOGY_MAP.get(skill.lower(), [])
+    expanded_terms.extend(children)
+    
+if expanded_terms:
+    expansion_para = "Expanded Query Context: " + ", ".join(list(set(expanded_terms)))
+    print(f"\nApplying Query Expansion: {expansion_para}")
+    paragraphs.append(expansion_para)
+    # Assign highest priority weight (Must-Have = 6.0)
+    weights.append(6.0)
+
+print(f"\nLoading BGE model ({config.DENSE_MODEL_NAME})...")
+model = SentenceTransformer(config.DENSE_MODEL_NAME, local_files_only=True)
+model.max_seq_length = config.MAX_SEQ_LENGTH
+
+# INT8 CPU Quantization
+try:
+    model = torch.quantization.quantize_dynamic(
+        model, {torch.nn.Linear}, dtype=torch.qint8
+    )
+    print("Model dynamic INT8 quantization enabled successfully.")
+except Exception as e:
+    print(f"Dynamic quantization fallback: {e}")
 
 queries = [
     "Represent this sentence for searching relevant passages: " + p 

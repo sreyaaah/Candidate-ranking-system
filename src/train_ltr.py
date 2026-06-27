@@ -1,21 +1,25 @@
 import pandas as pd
 import xgboost as xgb
 import os
+import config
 
 def train_ranker():
     print("Loading training data...")
     df = pd.read_csv("data/training_data.csv")
     
-    # Sort by relevance just to be safe, though group handles it
-    df = df.sort_values(by="relevance", ascending=False).reset_index(drop=True)
+    # Crucial for LTR: Sort data by query_id first, then relevance
+    df = df.sort_values(by=["query_id", "relevance"], ascending=[True, False]).reset_index(drop=True)
+    
+    # Calculate group lengths (number of candidates per query group)
+    groups = df.groupby("query_id").size().tolist()
+    print(f"Loaded {len(groups)} query groups with sizes: {groups}")
     
     # Dynamically extract all features except metadata columns
-    exclude = {"candidate_id", "full_text", "teacher_score", "relevance", "matched_skills", "missing_skills"}
+    exclude = {"query_id", "candidate_id", "full_text", "teacher_score", "relevance", "matched_skills", "missing_skills"}
     features = [col for col in df.columns if col not in exclude]
     
     X = df[features]
     y = df["relevance"]
-    groups = [len(X)]
     
     os.makedirs("models", exist_ok=True)
     
@@ -32,9 +36,8 @@ def train_ranker():
         random_state=42
     )
     ranker_pairwise.fit(X, y, group=groups)
-    pairwise_path = "models/xgb_ranker_pairwise.json"
-    ranker_pairwise.save_model(pairwise_path)
-    print(f"Model A saved to {pairwise_path}")
+    ranker_pairwise.save_model(config.LTR_PAIRWISE_PATH)
+    print(f"Model A saved to {config.LTR_PAIRWISE_PATH}")
     
     # --- Model B: NDCG LTR Ranker ---
     print("\nTraining Model B: NDCG XGBRanker...")
@@ -49,12 +52,11 @@ def train_ranker():
         random_state=42
     )
     ranker_ndcg.fit(X, y, group=groups)
-    ndcg_path = "models/xgb_ranker_ndcg.json"
-    ranker_ndcg.save_model(ndcg_path)
-    print(f"Model B saved to {ndcg_path}")
+    ranker_ndcg.save_model(config.LTR_NDCG_PATH)
+    print(f"Model B saved to {config.LTR_NDCG_PATH}")
     
     # Save a legacy fallback so standard inference doesn't break
-    ranker_pairwise.save_model("models/xgb_ranker.json")
+    ranker_pairwise.save_model(config.LTR_LEGACY_PATH)
     
     # Print Feature Importances for Pairwise Model
     importances = ranker_pairwise.feature_importances_

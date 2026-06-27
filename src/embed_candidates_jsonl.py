@@ -3,79 +3,65 @@ import numpy as np
 import pickle
 import torch
 from sentence_transformers import SentenceTransformer
-
-DB_PATH = "data/candidates.db"
+import config
 
 def embed_candidates():
-    # Set PyTorch threads to prevent memory thrashing and core contention on CPU
     torch.set_num_threads(4)
     print("Configured PyTorch to use 4 CPU threads.")
     
-    print("Loading local embedding model (BAAI/bge-base-en-v1.5)...")
-    model = SentenceTransformer("BAAI/bge-base-en-v1.5")
-    model.max_seq_length = 384 # Optimal seq length for CPU cache performance
+    print(f"Loading local embedding model ({config.DENSE_MODEL_NAME})...")
+    model = SentenceTransformer(config.DENSE_MODEL_NAME, local_files_only=True)
+    model.max_seq_length = config.MAX_SEQ_LENGTH
     
-    conn = sqlite3.connect(DB_PATH)
+    # Quantize weights to INT8 to accelerate CPU execution and reduce memory overhead
+    try:
+        model = torch.quantization.quantize_dynamic(
+            model, {torch.nn.Linear}, dtype=torch.qint8
+        )
+        print("Model dynamic INT8 quantization enabled successfully.")
+    except Exception as e:
+        print(f"Dynamic quantization fallback: {e}")
+    
+    conn = sqlite3.connect(config.DB_PATH)
     cursor = conn.cursor()
-    cursor.execute("SELECT id, full_text FROM candidates")
+    # Select structured columns directly to avoid fragile string splitting
+    cursor.execute("SELECT id, summary, skills, experience, education, certifications, full_text FROM candidates")
     rows = cursor.fetchall()
     conn.close()
     
     resume_names = []
     queries = []
     
-    print("Parsing candidate profiles into structured sections...")
-    for cand_id, text in rows:
-        text = str(text)
+    print("Packing candidate profiles into section vectors...")
+    for cand_id, summary, skills, experience, education, certs, full_text in rows:
+        summary_text = str(summary or "")
+        skills_text = str(skills or "")
+        experience_text = str(experience or "")
+        education_certs_text = f"Education: {education or ''}. Certifications: {certs or ''}."
         
-        # Safe extraction of structured sections from candidate full_text
-        summary = ""
-        skills = ""
-        experience = ""
-        education = ""
-        
-        try:
-            if "Profile Summary: " in text:
-                summary = text.split("Profile Summary: ")[1].split(". Core Competencies: ")[0]
-            if "Core Competencies: " in text:
-                skills = text.split("Core Competencies: ")[1].split(" Experience: ")[0]
-            if " Experience: " in text:
-                experience = text.split(" Experience: ")[1].split(". Education: ")[0]
-            if "Education: " in text:
-                education = text.split("Education: ")[1]
-        except Exception:
-            # Fallback if parsing fails due to malformed text
-            summary = text[:500]
-            skills = text[:500]
-            experience = text[:1000]
-            education = text[-500:]
-            
-        # Add 4 sections per candidate
+        # Section mapping
         sections = {
-            "summary": summary if summary else text[:300],
-            "skills": skills if skills else text[:300],
-            "experience": experience if experience else text[:500],
-            "education": education if education else text[-300:]
+            "summary": summary_text if len(summary_text) > 10 else str(full_text)[:300],
+            "skills": skills_text if len(skills_text) > 10 else str(full_text)[:300],
+            "experience": experience_text if len(experience_text) > 10 else str(full_text)[:500],
+            "education": education_certs_text if len(education_certs_text) > 10 else str(full_text)[-300:]
         }
         
         for sec_name, sec_text in sections.items():
             resume_names.append(f"{cand_id}_{sec_name}")
-            # Prep query prefix for retrieval passage search
             queries.append("Represent this sentence for searching relevant passages: " + str(sec_text)[:1200])
             
     print(f"Generating embeddings for {len(queries)} section-level vectors locally...")
     
-    # Encode all 20,000 section vectors directly with smart batching
     embeddings = model.encode(
         queries,
-        batch_size=16, # fits L3 CPU cache perfectly
+        batch_size=config.BATCH_SIZE,
         show_progress_bar=True,
         normalize_embeddings=True
     )
     
     embeddings_np = np.array(embeddings, dtype=np.float32)
     
-    # Save files
     import os
     os.makedirs("embeddings", exist_ok=True)
     np.save("embeddings/resume_embeddings.npy", embeddings_np)

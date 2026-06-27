@@ -10,10 +10,14 @@ def tokenize(text):
         return []
     return re.findall(r"(?i)\b[a-z0-9_+#.]+\b", text.lower())
 
-def get_hybrid_scores(jd_text, k_rrf=60, top_n=2000):
+def get_hybrid_scores(jd_text, k_rrf=60, top_n=2000, query_emb=None):
     # 1. Load dense resources
     print("Loading FAISS index and JD embedding...")
-    jd_embedding = np.load("embeddings/jd_embedding.npy")
+    if query_emb is not None:
+        jd_embedding = query_emb
+    else:
+        jd_embedding = np.load("embeddings/jd_embedding.npy")
+        
     index = faiss.read_index("embeddings/resume.index")
     with open("embeddings/resume_names.pkl", "rb") as f:
         dense_resume_names = pickle.load(f)
@@ -44,7 +48,18 @@ def get_hybrid_scores(jd_text, k_rrf=60, top_n=2000):
         sparse_resume_names = pickle.load(f)
         
     # Sparse Search
-    tokenized_query = tokenize(jd_text)
+    from extract_skills import extract_required_skills, ONTOLOGY_MAP
+    required_skills = extract_required_skills(jd_text)
+    expanded_terms = []
+    for skill in required_skills:
+        children = ONTOLOGY_MAP.get(skill.lower(), [])
+        expanded_terms.extend(children)
+    
+    expanded_jd = jd_text
+    if expanded_terms:
+        expanded_jd += " " + " ".join(list(set(expanded_terms)))
+        
+    tokenized_query = tokenize(expanded_jd)
     sparse_scores = bm25.get_scores(tokenized_query)
     
     # Map candidate IDs to their sparse rank

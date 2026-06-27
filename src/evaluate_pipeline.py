@@ -2,26 +2,19 @@ import numpy as np
 import pandas as pd
 import xgboost as xgb
 from sklearn.model_selection import train_test_split
+import config
 
 def calculate_ndcg(true_labels, predicted_scores, k=20):
-    """
-    Calculate Normalized Discounted Cumulative Gain (NDCG) at K.
-    Assuming true_labels are graded relevance (0, 1, 2, 3)
-    """
     if len(true_labels) == 0:
         return 0.0
         
     df = pd.DataFrame({"label": true_labels, "score": predicted_scores})
-    
-    # Sort by predicted score
     df = df.sort_values(by="score", ascending=False).head(k)
     
-    # DCG
     dcg = 0.0
     for i, label in enumerate(df["label"]):
         dcg += (2**label - 1) / np.log2(i + 2)
         
-    # IDCG (Ideal DCG)
     ideal_df = df.sort_values(by="label", ascending=False).head(k)
     idcg = 0.0
     for i, label in enumerate(ideal_df["label"]):
@@ -34,7 +27,7 @@ def calculate_ndcg(true_labels, predicted_scores, k=20):
 
 def evaluate():
     print("==================================================")
-    print("  OBJECTIVE PIPELINE EVALUATION (80/20 HOLDOUT SPLIT) ")
+    print("  OBJECTIVE PIPELINE EVALUATION (80/20 TARGET DOMAIN SPLIT) ")
     print("==================================================\n")
     
     print("Loading distilled training data...")
@@ -44,16 +37,27 @@ def evaluate():
         print("Training data not found. Please run generate_training_data.py first.")
         return
         
-    # Split candidates into 80% Train, 20% Holdout Validation
-    train_df, val_df = train_test_split(df, test_size=0.2, random_state=42)
+    # Isolate Target JD (Query Group 0) candidates
+    df_group0 = df[df["query_id"] == 0].copy()
     
-    print(f"Train Size: {len(train_df)} | Holdout Validation Size: {len(val_df)}")
+    # Split Target JD 80/20
+    train_target, val_target = train_test_split(df_group0, test_size=0.2, random_state=42)
+    
+    # Include synthetic queries in training to increase dataset diversity
+    df_others = df[df["query_id"] != 0].copy()
+    train_df = pd.concat([train_target, df_others], ignore_index=True)
+    
+    # Sort train set by query_id for XGBoost LTR
+    train_df = train_df.sort_values(by=["query_id", "relevance"], ascending=[True, False]).reset_index(drop=True)
+    groups_train = train_df.groupby("query_id").size().tolist()
+    
+    print(f"Train Size: {len(train_df)} candidates across {len(groups_train)} query groups.")
+    print(f"Holdout Validation Size: {len(val_target)} candidates (Unseen from Target JD).")
     
     # Get features list dynamically
-    exclude = {"candidate_id", "full_text", "teacher_score", "relevance", "matched_skills", "missing_skills"}
+    exclude = {"query_id", "candidate_id", "full_text", "teacher_score", "relevance", "matched_skills", "missing_skills"}
     features = [col for col in df.columns if col not in exclude]
     
-    # Train LTR on train_df ONLY
     X_train = train_df[features]
     y_train = train_df["relevance"]
     
@@ -68,7 +72,7 @@ def evaluate():
         colsample_bytree=0.8,
         random_state=42
     )
-    ranker_pairwise.fit(X_train, y_train, group=[len(X_train)])
+    ranker_pairwise.fit(X_train, y_train, group=groups_train)
     
     # 2. Train NDCG Model
     ranker_ndcg = xgb.XGBRanker(
@@ -81,14 +85,14 @@ def evaluate():
         colsample_bytree=0.8,
         random_state=42
     )
-    ranker_ndcg.fit(X_train, y_train, group=[len(X_train)])
+    ranker_ndcg.fit(X_train, y_train, group=groups_train)
     
-    # Evaluate on holdout validation set
-    labels_val = val_df["relevance"].values
-    X_val = val_df[features]
+    # Evaluate on target holdout set
+    labels_val = val_target["relevance"].values
+    X_val = val_target[features]
     
     # 1. Baseline Hybrid (RRF Score)
-    ndcg_hybrid = calculate_ndcg(labels_val, val_df["rrf_score"].values, k=100)
+    ndcg_hybrid = calculate_ndcg(labels_val, val_target["rrf_score"].values, k=100)
     
     # 2. Pairwise LTR Ranker
     scores_pairwise = ranker_pairwise.predict(X_val)
@@ -109,10 +113,10 @@ def evaluate():
     ndcg_blended = calculate_ndcg(labels_val, scores_blended, k=100)
     
     # 5. CrossEncoder Teacher Score (Upper Ceiling)
-    ndcg_ce = calculate_ndcg(labels_val, val_df["teacher_score"].values, k=100)
+    ndcg_ce = calculate_ndcg(labels_val, val_target["teacher_score"].values, k=100)
     
     print("\n--------------------------------------------------")
-    print("      NDCG@100 ON HOLDOUT VALIDATION SET (UNSEEN) ")
+    print("  NDCG@100 ON HOLDOUT VALIDATION SET (TARGET JD)  ")
     print("--------------------------------------------------")
     print(f"1. Baseline Hybrid Search (RRF Score)       -> NDCG@100: {ndcg_hybrid:.4f}")
     print(f"2. XGBoost LTR Pairwise Model                -> NDCG@100: {ndcg_pairwise:.4f}")

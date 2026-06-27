@@ -37,7 +37,7 @@ def main():
     placeholders = ",".join(["?"] * len(candidate_ids))
     query = f"""
         SELECT 
-            c.id, c.skills, c.full_text, f.*
+            c.id AS cand_db_id, c.skills, c.full_text, f.*
         FROM candidates c
         LEFT JOIN candidate_features f ON c.id = f.candidate_id
         WHERE c.id IN ({placeholders})
@@ -50,14 +50,18 @@ def main():
     features_map = {}
     for row in cursor.fetchall():
         row_dict = dict(zip(col_names, row))
-        features_map[row_dict["id"]] = row_dict
+        features_map[row_dict["cand_db_id"]] = row_dict
     conn.close()
     
     dataset = []
     for cand_id, rrf_score in hybrid_results:
+        # --- Explicit Honeypot Filtering ---
+        if cand_id == "CAND":
+            continue
+            
         feats = features_map.get(cand_id, {})
-        # --- Honeypot Filtering ---
-        if feats.get("honeypot_flag", 0) == 1: continue
+        if feats.get("honeypot_flag", 0) == 1:
+            continue
         
         # Skill Ontology check
         candidate_skills = [s.strip() for s in str(feats.get("skills", "")).split(",") if s.strip()]
@@ -93,7 +97,7 @@ def main():
     ranker_ndcg = xgb.XGBRanker()
     ranker_ndcg.load_model("models/xgb_ranker_ndcg.json")
     
-    exclude = {"candidate_id", "full_text", "matched_skills", "missing_skills", "ml_score", "ce_score", "norm_ml_score", "final_score", "score", "rank", "reasoning"}
+    exclude = {"cand_db_id", "candidate_id", "full_text", "matched_skills", "missing_skills", "ml_score", "ce_score", "norm_ml_score", "final_score", "score", "rank", "reasoning"}
     features = [col for col in df.columns if col not in exclude]
     
     X = df[features]
@@ -118,8 +122,10 @@ def main():
     top_200 = df.head(200).copy()
     
     # 4. Stage 5: CrossEncoder Re-ranking
+    import config
     print("\nLoading CrossEncoder for Stage 5 Top-N Re-ranking...")
-    ce_model = CrossEncoder('cross-encoder/ms-marco-MiniLM-L-6-v2', max_length=512)
+    ce_model = CrossEncoder(config.CROSS_ENCODER_MODEL_NAME, max_length=512, local_files_only=True)
+        
     # Give the model the title/context, plus the explicit requirements section
     jd_trunc = jd_text[:300] + "\n...[Requirements]...\n" + jd_text[3800:5200]
     
