@@ -6,6 +6,8 @@ import sys
 import xgboost as xgb
 import csv
 from sentence_transformers import CrossEncoder
+from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.metrics.pairwise import cosine_similarity
 
 # Ensure src is in the path to import search_hybrid
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
@@ -60,6 +62,10 @@ def generate_reasoning(row):
     elif notice > 60:
         reasons.append(f"Notice period of {notice} days is a minor logistical risk.")
         
+    # Stage 6 explicit mention
+    if row.get("diversity_promoted", False):
+        reasons.append("Candidate was actively promoted by the MMR algorithm to ensure structural team diversity.")
+        
     return " ".join(reasons)
 
 def main():
@@ -67,24 +73,24 @@ def main():
     doc = Document("data/jobs/job_description.docx")
     jd_text = "\n".join([para.text for para in doc.paragraphs])
     
-    # 1. Stage 1 & 2: Hybrid Retrieval (Fetch extra candidates so we can filter honeypots)
+    # 1. Stage 1 & 2: Hybrid Retrieval
     top_n = 2000
     hybrid_results = get_hybrid_scores(jd_text, top_n=top_n)
     
     print("\nFetching features from database...")
     candidate_ids = [res[0] for res in hybrid_results]
     
-    # 2. Stage 3: Feature Engineering lookups
     conn = sqlite3.connect("data/candidates.db")
     cursor = conn.cursor()
     
     placeholders = ",".join(["?"] * len(candidate_ids))
-    # Note: Fetching full_text for the Cross-Encoder step
     query = f"""
         SELECT 
             c.id, c.skills, c.full_text,
             f.yoe, f.ai_years, f.job_hopping_index, f.github_score, 
-            f.education_tier, f.notice_period_days, f.recruiter_response_rate
+            f.education_tier, f.notice_period_days, f.recruiter_response_rate,
+            f.company_fit_score, f.career_trajectory_score, f.behavioral_score,
+            f.location_match, f.honeypot_flag
         FROM candidates c
         LEFT JOIN candidate_features f ON c.id = f.candidate_id
         WHERE c.id IN ({placeholders})
@@ -102,19 +108,20 @@ def main():
             "github_score": row[6] or 0.0,
             "education_tier": row[7] or 3,
             "notice_period": row[8] or 0,
-            "response_rate": row[9] or 0.0
+            "response_rate": row[9] or 0.0,
+            "company_fit_score": row[10] or 0.0,
+            "career_trajectory_score": row[11] or 0.0,
+            "behavioral_score": row[12] or 0.0,
+            "location_match": row[13] or 0,
+            "honeypot_flag": row[14] or 0
         }
-        
     conn.close()
     
     dataset = []
-    
     for cand_id, rrf_score in hybrid_results:
         feats = features_map.get(cand_id, {})
-        
         # --- Honeypot Filtering ---
-        if feats.get("yoe", 0.0) > 50: continue
-        if feats.get("notice_period", 0) > 180: continue
+        if feats.get("honeypot_flag", 0) == 1: continue
         
         text = feats.get("skills", "")
         matched = sum(1 for skill in required_skills if skill in text)
@@ -130,7 +137,12 @@ def main():
             "job_hopping_index": feats.get("job_hopping_index", 0.0),
             "github_score": feats.get("github_score", 0.0),
             "education_tier": feats.get("education_tier", 3),
-            "notice_period": feats.get("notice_period", 0)
+            "notice_period": feats.get("notice_period", 0),
+            "company_fit_score": feats.get("company_fit_score", 0.0),
+            "career_trajectory_score": feats.get("career_trajectory_score", 0.0),
+            "behavioral_score": feats.get("behavioral_score", 0.0),
+            "location_match": feats.get("location_match", 0),
+            "honeypot_flag": feats.get("honeypot_flag", 0)
         })
         
     df = pd.DataFrame(dataset)
@@ -139,72 +151,94 @@ def main():
     print("Loading XGBoost Ranker model...")
     ranker = xgb.XGBRanker()
     ranker.load_model("models/xgb_ranker.json")
-    
     features = [
         "rrf_score", "skill_score", "yoe", "ai_years", 
-        "job_hopping_index", "github_score", "education_tier", "notice_period"
+        "job_hopping_index", "github_score", "education_tier", "notice_period",
+        "company_fit_score", "career_trajectory_score", "behavioral_score",
+        "location_match", "honeypot_flag"
     ]
-    
     X = df[features]
     df["ml_score"] = ranker.predict(X)
-    
-    # Sort by ML score
     df = df.sort_values(by="ml_score", ascending=False).reset_index(drop=True)
-    
-    # Keep Top 200 for Stage 5
     df_top_200 = df.head(200).copy()
     
     # 4. Stage 5: Cross-Encoder Re-Ranking
     print("\nLoading CrossEncoder for Stage 5 Top-N Re-ranking...")
-    # Using a fast, highly accurate cross-encoder
     ce_model = CrossEncoder('cross-encoder/ms-marco-MiniLM-L-6-v2', max_length=512)
-    
-    # Prepare pairs: (JD, Candidate_Text)
-    # We truncate JD and Candidate Text heavily to save compute time and fit context limits
     jd_trunc = jd_text[:1000]
     ce_pairs = [(jd_trunc, str(text)[:1000]) for text in df_top_200["full_text"]]
     
     print("Running CrossEncoder inference on Top 200 candidates...")
     ce_scores = ce_model.predict(ce_pairs)
+    norm_ce_scores = 1 / (1 + np.exp(-ce_scores)) # Sigmoid
     
-    # Normalize CE scores between 0 and 1 using Sigmoid
-    def sigmoid(x):
-        return 1 / (1 + np.exp(-x))
-    
-    norm_ce_scores = sigmoid(ce_scores)
-    df_top_200["ce_score"] = norm_ce_scores
-    
-    # Blend ML Score and CE Score
-    # We normalize ML score roughly as well to blend them
     min_ml = df_top_200["ml_score"].min()
     max_ml = df_top_200["ml_score"].max()
     norm_ml_scores = (df_top_200["ml_score"] - min_ml) / (max_ml - min_ml + 1e-9)
+    df_top_200["final_score"] = (norm_ml_scores * 0.5) + (norm_ce_scores * 0.5)
     
-    df_top_200["final_score"] = (norm_ml_scores * 0.5) + (df_top_200["ce_score"] * 0.5)
+    # 5. Stage 6: Maximal Marginal Relevance (Diversity)
+    print("\nRunning Stage 6: MMR (Maximal Marginal Relevance) Diversity filtering...")
+    texts = df_top_200["full_text"].tolist()
+    vectorizer = TfidfVectorizer(stop_words='english', max_features=1000)
+    tfidf_matrix = vectorizer.fit_transform(texts)
+    sim_matrix = cosine_similarity(tfidf_matrix)
     
-    # Sort by Final Blended Score DESC, then candidate_id ASC for tie-breaking
-    df_top_200 = df_top_200.sort_values(by=["final_score", "candidate_id"], ascending=[False, True]).reset_index(drop=True)
+    # Extract needed arrays for fast computation
+    candidates = df_top_200.to_dict('records')
+    scores = np.array([c["final_score"] for c in candidates])
     
-    # Keep exact Top 100 for submission
-    final_df = df_top_200.head(100).copy()
+    selected_indices = []
+    unselected_indices = list(range(len(candidates)))
     
-    # Add Rank
-    final_df["rank"] = range(1, 101)
+    LAMBDA = 0.85 # 85% relevance, 15% diversity penalty
+    
+    while len(selected_indices) < 100 and unselected_indices:
+        if not selected_indices:
+            # First item is purely the most relevant
+            best_idx = unselected_indices[np.argmax(scores[unselected_indices])]
+        else:
+            # MMR formula
+            unsel_scores = scores[unselected_indices]
+            # Max similarity to ANY already selected candidate
+            sim_to_selected = sim_matrix[unselected_indices][:, selected_indices]
+            max_sims = np.max(sim_to_selected, axis=1)
+            
+            mmr_scores = (LAMBDA * unsel_scores) - ((1 - LAMBDA) * max_sims)
+            best_idx_in_unselected = np.argmax(mmr_scores)
+            best_idx = unselected_indices[best_idx_in_unselected]
+            
+            # Check if this candidate was promoted purely due to MMR
+            pure_relevance_idx = unselected_indices[np.argmax(unsel_scores)]
+            if best_idx != pure_relevance_idx:
+                candidates[best_idx]["diversity_promoted"] = True
+                
+        selected_indices.append(best_idx)
+        unselected_indices.remove(best_idx)
+        
+    final_candidates = [candidates[i] for i in selected_indices]
+    final_df = pd.DataFrame(final_candidates)
     
     # We must rename final_score to score for the validator
     final_df.rename(columns={"final_score": "score"}, inplace=True)
+    
+    # Round score BEFORE sorting so tie-breakers are accurate for the CSV
+    final_df["score"] = final_df["score"].round(4)
+    
+    # Format tie breaking securely
+    final_df = final_df.sort_values(by=["score", "candidate_id"], ascending=[False, True]).reset_index(drop=True)
+    final_df["rank"] = range(1, 101)
     
     # Add Reasoning
     final_df["reasoning"] = final_df.apply(generate_reasoning, axis=1)
     
     # Output to Submission Format
     submission_df = final_df[["candidate_id", "rank", "score", "reasoning"]]
-    submission_df.loc[:, "score"] = submission_df["score"].round(4)
     
     output_filename = "team_submission.csv"
     submission_df.to_csv(output_filename, index=False, quoting=csv.QUOTE_MINIMAL)
     
-    print(f"\nSuccessfully generated {output_filename} with EXACTLY 100 rows using Stage 5 Cross-Encoder.")
+    print(f"\nSuccessfully generated {output_filename} with exactly 100 diverse rows.")
 
 if __name__ == "__main__":
     main()

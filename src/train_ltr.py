@@ -11,7 +11,9 @@ def train_ranker():
     
     features = [
         "rrf_score", "skill_score", "yoe", "ai_years", 
-        "job_hopping_index", "github_score", "education_tier", "notice_period"
+        "job_hopping_index", "github_score", "education_tier", "notice_period",
+        "company_fit_score", "career_trajectory_score", "behavioral_score",
+        "location_match", "honeypot_flag"
     ]
     
     X = df[features]
