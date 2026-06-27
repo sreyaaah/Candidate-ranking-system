@@ -59,10 +59,9 @@ def main():
         # --- Honeypot Filtering ---
         if feats.get("honeypot_flag", 0) == 1: continue
         
-        text = str(feats.get("skills", "")).lower()
-        
-        matched_skills = [skill for skill in required_skills if skill in text]
-        missing_skills = [skill for skill in required_skills if skill not in text]
+        # Skill Ontology check
+        candidate_skills = [s.strip() for s in str(feats.get("skills", "")).split(",") if s.strip()]
+        matched_skills, missing_skills = match_skills_with_ontology(candidate_skills, required_skills)
         skill_score = len(matched_skills) / len(required_skills) if required_skills else 0.0
             
         feat_dict = {
@@ -87,15 +86,31 @@ def main():
     df = pd.DataFrame(dataset)
     
     # 3. Stage 4: Learning-to-Rank Inference
-    print("Loading XGBoost Ranker model...")
-    ranker = xgb.XGBRanker()
-    ranker.load_model("models/xgb_ranker.json")
+    print("Loading XGBoost LTR Dual-Objective Ensemble...")
+    ranker_pairwise = xgb.XGBRanker()
+    ranker_pairwise.load_model("models/xgb_ranker_pairwise.json")
+    
+    ranker_ndcg = xgb.XGBRanker()
+    ranker_ndcg.load_model("models/xgb_ranker_ndcg.json")
     
     exclude = {"candidate_id", "full_text", "matched_skills", "missing_skills", "ml_score", "ce_score", "norm_ml_score", "final_score", "score", "rank", "reasoning"}
     features = [col for col in df.columns if col not in exclude]
     
     X = df[features]
-    df["ml_score"] = ranker.predict(X)
+    
+    # Predict with both LTR models
+    scores_pw = ranker_pairwise.predict(X)
+    scores_ndcg = ranker_ndcg.predict(X)
+    
+    # Min-max normalize predictions to blend them safely
+    min_pw, max_pw = scores_pw.min(), scores_pw.max()
+    norm_pw = (scores_pw - min_pw) / (max_pw - min_pw + 1e-9)
+    
+    min_ndcg, max_ndcg = scores_ndcg.min(), scores_ndcg.max()
+    norm_ndcg = (scores_ndcg - min_ndcg) / (max_ndcg - min_ndcg + 1e-9)
+    
+    # Blend the ensemble
+    df["ml_score"] = (norm_pw + norm_ndcg) / 2.0
     
     df = df.sort_values(by="ml_score", ascending=False).reset_index(drop=True)
     

@@ -3,68 +3,42 @@ import numpy as np
 import pickle
 import torch
 from sentence_transformers import SentenceTransformer
-from tqdm import tqdm
 
 DB_PATH = "data/candidates.db"
 
 def embed_candidates():
-    # Use BAAI/bge-base-en-v1.5 (or BGE-M3 later) which is 100% free and local
+    # Set PyTorch threads to prevent memory thrashing and core contention on CPU
+    torch.set_num_threads(4)
+    print("Configured PyTorch to use 4 CPU threads.")
+    
     print("Loading local embedding model (BAAI/bge-base-en-v1.5)...")
     model = SentenceTransformer("BAAI/bge-base-en-v1.5")
-    
-    # If a GPU is available, SentenceTransformer will use it automatically.
-    # Otherwise, it will use your CPU.
+    model.max_seq_length = 384 # Set seq length slightly lower to save massive CPU cache memory
     
     conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
-    
-    cursor.execute("SELECT COUNT(*) FROM candidates")
-    total_candidates = cursor.fetchone()[0]
-    
     cursor.execute("SELECT id, full_text FROM candidates")
     rows = cursor.fetchall()
     conn.close()
     
-    embeddings = []
-    resume_names = []
+    resume_names = [row[0] for row in rows]
+    # Slice to 1500 characters: fits full 300+ tokens, capturing Summary, Skills, Certs, and Recent Roles
+    queries = ["Represent this sentence for searching relevant passages: " + str(row[1])[:1500] for row in rows]
     
-    batch_size = 256 # Larger batch size for local processing
-    batch_ids = []
-    batch_texts = []
+    print(f"Generating embeddings for {len(queries)} candidates locally (batch size 16 to fit CPU cache)...")
     
-    print(f"Generating embeddings for {total_candidates} candidates locally...")
-    print("This may take a few minutes on CPU...")
-    
-    for cand_id, text in tqdm(rows, total=total_candidates):
-        # BGE models use this prefix for retrieving relevant passages
-        query = "Represent this sentence for searching relevant passages: " + str(text)[:4000]
-        
-        batch_ids.append(cand_id)
-        batch_texts.append(query)
-        
-        if len(batch_texts) >= batch_size:
-            # Encode locally
-            batch_embeddings = model.encode(
-                batch_texts, 
-                normalize_embeddings=True,
-                show_progress_bar=False
-            )
-            embeddings.extend(batch_embeddings)
-            resume_names.extend(batch_ids)
-            
-    # Process remaining
-    if batch_texts:
-        batch_embeddings = model.encode(
-            batch_texts, 
-            normalize_embeddings=True,
-            show_progress_bar=False
-        )
-        embeddings.extend(batch_embeddings)
-        resume_names.extend(batch_ids)
+    embeddings = model.encode(
+        queries,
+        batch_size=16, # Small batch size prevents CPU cache bottlenecks and OOMs
+        show_progress_bar=True,
+        normalize_embeddings=True
+    )
     
     embeddings_np = np.array(embeddings, dtype=np.float32)
     
     # Save files
+    import os
+    os.makedirs("embeddings", exist_ok=True)
     np.save("embeddings/resume_embeddings.npy", embeddings_np)
     with open("embeddings/resume_names.pkl", "wb") as f:
         pickle.dump(resume_names, f)

@@ -8,8 +8,8 @@ from sentence_transformers import CrossEncoder
 # Ensure src is in the path to import search_hybrid
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 from search_hybrid import get_hybrid_scores
+from extract_skills import extract_required_skills, match_skills_with_ontology
 from docx import Document
-from extract_skills import extract_required_skills
 
 def generate_training_data():
     print("Loading Job Description...")
@@ -54,9 +54,11 @@ def generate_training_data():
             continue
             
         row = row.iloc[0]
-        text = str(row["skills"]).lower()
-        matched = sum(1 for skill in required_skills if skill in text)
-        skill_score = matched / len(required_skills) if required_skills else 0.0
+        
+        # Skill Ontology check
+        candidate_skills = [s.strip() for s in str(row["skills"]).split(",") if s.strip()]
+        matched_skills, missing_skills = match_skills_with_ontology(candidate_skills, required_skills)
+        skill_score = len(matched_skills) / len(required_skills) if required_skills else 0.0
         
         full_text = str(row["full_text"])[:1000]
         

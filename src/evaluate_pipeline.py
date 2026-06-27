@@ -33,9 +33,9 @@ def calculate_ndcg(true_labels, predicted_scores, k=20):
     return dcg / idcg
 
 def evaluate():
-    print("==========================================")
-    print("  OBJECTIVE PIPELINE EVALUATION (80/20 SPLIT) ")
-    print("==========================================\n")
+    print("==================================================")
+    print("  OBJECTIVE PIPELINE EVALUATION (80/20 HOLDOUT SPLIT) ")
+    print("==================================================\n")
     
     print("Loading distilled training data...")
     try:
@@ -45,21 +45,20 @@ def evaluate():
         return
         
     # Split candidates into 80% Train, 20% Holdout Validation
-    # We do a clean holdout split to ensure LTR generalizes objectively.
     train_df, val_df = train_test_split(df, test_size=0.2, random_state=42)
     
     print(f"Train Size: {len(train_df)} | Holdout Validation Size: {len(val_df)}")
     
     # Get features list dynamically
-    exclude = {"candidate_id", "full_text", "teacher_score", "relevance"}
+    exclude = {"candidate_id", "full_text", "teacher_score", "relevance", "matched_skills", "missing_skills"}
     features = [col for col in df.columns if col not in exclude]
     
     # Train LTR on train_df ONLY
     X_train = train_df[features]
     y_train = train_df["relevance"]
     
-    # Train Ranker
-    ranker = xgb.XGBRanker(
+    # 1. Train Pairwise Model
+    ranker_pairwise = xgb.XGBRanker(
         tree_method="hist",
         objective="rank:pairwise",
         learning_rate=0.1,
@@ -69,42 +68,70 @@ def evaluate():
         colsample_bytree=0.8,
         random_state=42
     )
-    ranker.fit(X_train, y_train, group=[len(X_train)])
+    ranker_pairwise.fit(X_train, y_train, group=[len(X_train)])
+    
+    # 2. Train NDCG Model
+    ranker_ndcg = xgb.XGBRanker(
+        tree_method="hist",
+        objective="rank:ndcg",
+        learning_rate=0.1,
+        n_estimators=100,
+        max_depth=4,
+        subsample=0.8,
+        colsample_bytree=0.8,
+        random_state=42
+    )
+    ranker_ndcg.fit(X_train, y_train, group=[len(X_train)])
     
     # Evaluate on holdout validation set
     labels_val = val_df["relevance"].values
+    X_val = val_df[features]
     
-    # 1. Baseline Hybrid (Semantic + BM25)
+    # 1. Baseline Hybrid (RRF Score)
     ndcg_hybrid = calculate_ndcg(labels_val, val_df["rrf_score"].values, k=100)
     
-    # 2. XGBoost LTR on validation set (Unseen Candidates)
-    X_val = val_df[features]
-    predicted_val_scores = ranker.predict(X_val)
-    ndcg_xgb = calculate_ndcg(labels_val, predicted_val_scores, k=100)
+    # 2. Pairwise LTR Ranker
+    scores_pairwise = ranker_pairwise.predict(X_val)
+    ndcg_pairwise = calculate_ndcg(labels_val, scores_pairwise, k=100)
     
-    # 3. CrossEncoder Teacher Score (Upper Ceiling / Semantic Gold)
+    # 3. NDCG LTR Ranker
+    scores_ndcg = ranker_ndcg.predict(X_val)
+    ndcg_ndcg_model = calculate_ndcg(labels_val, scores_ndcg, k=100)
+    
+    # 4. Blended LTR Ensemble (Min-Max scaled average of both predictions)
+    min_pw, max_pw = scores_pairwise.min(), scores_pairwise.max()
+    norm_pw = (scores_pairwise - min_pw) / (max_pw - min_pw + 1e-9)
+    
+    min_ndcg, max_ndcg = scores_ndcg.min(), scores_ndcg.max()
+    norm_ndcg = (scores_ndcg - min_ndcg) / (max_ndcg - min_ndcg + 1e-9)
+    
+    scores_blended = (norm_pw + norm_ndcg) / 2.0
+    ndcg_blended = calculate_ndcg(labels_val, scores_blended, k=100)
+    
+    # 5. CrossEncoder Teacher Score (Upper Ceiling)
     ndcg_ce = calculate_ndcg(labels_val, val_df["teacher_score"].values, k=100)
     
-    print("\n------------------------------------------")
-    print("      NDCG@100 ON HOLDOUT VALIDATION SET  ")
-    print("------------------------------------------")
-    print(f"1. Baseline Hybrid Search (RRF Score)     -> NDCG@100: {ndcg_hybrid:.4f}")
-    print(f"2. XGBoost Learning-to-Rank (LTR Student) -> NDCG@100: {ndcg_xgb:.4f}")
-    print(f"3. Neural Cross-Encoder (Teacher Gold)    -> NDCG@100: {ndcg_ce:.4f}")
+    print("\n--------------------------------------------------")
+    print("      NDCG@100 ON HOLDOUT VALIDATION SET (UNSEEN) ")
+    print("--------------------------------------------------")
+    print(f"1. Baseline Hybrid Search (RRF Score)       -> NDCG@100: {ndcg_hybrid:.4f}")
+    print(f"2. XGBoost LTR Pairwise Model                -> NDCG@100: {ndcg_pairwise:.4f}")
+    print(f"3. XGBoost LTR NDCG Model                    -> NDCG@100: {ndcg_ndcg_model:.4f}")
+    print(f"4. Blended Dual-Objective LTR Ensemble      -> NDCG@100: {ndcg_blended:.4f}")
+    print(f"5. Neural Cross-Encoder (Teacher Gold)      -> NDCG@100: {ndcg_ce:.4f}")
     
-    print("\n------------------------------------------")
-    print("      STUDENT FEATURE IMPORTANCES         ")
-    print("------------------------------------------")
-    importances = ranker.feature_importances_
+    print("\n--------------------------------------------------")
+    print("      STUDENT FEATURE IMPORTANCES (PAIRWISE)      ")
+    print("--------------------------------------------------")
+    importances = ranker_pairwise.feature_importances_
     sorted_idx = np.argsort(importances)[::-1]
     
-    # Print top 15 features for clarity
     print("Top 15 Most Predictive Tabular Features:")
     for i in range(min(15, len(features))):
         idx = sorted_idx[i]
         print(f"  {features[idx]:<25}: {importances[idx]:.4f}")
         
-    print("\nObjective Evaluation Complete.")
+    print("\nEvaluation Complete.")
 
 if __name__ == "__main__":
     evaluate()

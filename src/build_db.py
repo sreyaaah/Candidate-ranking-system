@@ -51,11 +51,23 @@ def process_candidates():
             skills_list = data.get("skills", [])
             skills_text = ", ".join([s.get("name", "") if isinstance(s, dict) else str(s) for s in skills_list])
             
-            # Combine everything for embedding - Headline and Summary
-            profile_text = f"Headline: {headline}. Summary: {summary}."
+            # Priority 4: Weighted Candidate Sections (Repeat headline and skills to increase self-attention weights)
+            weighted_headline = " ".join([f"Current Title: {headline}."] * 3)
             
-            # Skills details with proficiency
-            skills_text = ", ".join([f"{s.get('name', '')} ({s.get('proficiency', '')})" if isinstance(s, dict) else str(s) for s in skills_list])
+            # Priority 5: Natural Language Skill Sentences
+            skills_sentences = []
+            for s in skills_list:
+                if isinstance(s, dict):
+                    name = s.get("name", "")
+                    prof = s.get("proficiency", "intermediate")
+                    dur = s.get("duration_months", 0)
+                    skills_sentences.append(f"Candidate is proficient in {name} at an {prof} level for {dur} months.")
+                else:
+                    skills_sentences.append(f"Candidate has experience with {s}.")
+            skills_rich_text = " ".join(skills_sentences)
+            
+            # Weight skills 2x
+            weighted_skills = " ".join([skills_rich_text] * 2)
             
             # Career history with titles, companies, and descriptions (accomplishments)
             career_history = data.get("career_history", [])
@@ -79,8 +91,8 @@ def process_candidates():
             certs = data.get("certifications", [])
             cert_text = ", ".join([str(c) for c in certs])
             
-            # Combined Rich Text
-            full_text = f"{profile_text} Skills: {skills_text}. Experience: {career_text}. Education: {edu_text}. Certifications: {cert_text}."
+            # Priority 3: Combined Rich Text with Structured Sections
+            full_text = f"{weighted_headline} Profile Summary: {summary}. Core Competencies: {weighted_skills} Experience: {career_text}. Education: {edu_text}. Certifications: {cert_text}."
             
             # Keep skills field for faster skill matching later
             skills_lower = ", ".join([s.get("name", "") if isinstance(s, dict) else str(s) for s in skills_list]).lower()
