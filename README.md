@@ -11,7 +11,7 @@ The system processes candidates using a multi-stage funnel architecture to achie
 ```
 [5,000 Candidates in DB]
         │
-        ├── Stage 1: Dense Retrieval (FAISS + BGE-base-en-v1.5)
+        ├── Stage 1: Late-Fusion Multi-Vector Dense Retrieval (Summary, Skills, Experience, Education)
         ├── Stage 2: Sparse Retrieval (BM25 with Node.js/C++ Tokenizer)
         │
     [Stage 3: Reciprocal Rank Fusion (RRF)]
@@ -19,7 +19,7 @@ The system processes candidates using a multi-stage funnel architecture to achie
     [Top 2,000 Candidates]
         │
         ├── Stage 4: Feature Extraction (46 advanced engineered features)
-        ├── Stage 5: Learning-to-Rank (XGBoost Ranker via Knowledge Distillation)
+        ├── Stage 5: Dual-Objective Learning-to-Rank Ensemble (Pairwise + NDCG XGBRankers)
         │
     [Top 200 Candidates]
         │
@@ -28,6 +28,12 @@ The system processes candidates using a multi-stage funnel architecture to achie
         │
 [Top 100 Structured Diverse Candidates]
 ```
+
+### Advanced System Upgrades:
+- **Late-Fusion Multi-Vector Retrieval:** Instead of compressing entire profiles into a single vector, candidates are split into 4 sections (**Summary, Skills, Experience, and Education**) and embedded separately (20,000 vectors total). During retrieval, section ranks are aggregated back to parent candidate IDs using a Min Rank (MaxSim) late-fusion operator.
+- **Unsupervised TF-IDF Section Classifier:** The Job Description is classified into sections (Must-Have, Responsibilities, Preferred, Company background, etc.) using TF-IDF cosine similarity against anchor terms, weighting Must-Have paragraphs **6x** and Company information **0.3x** during query pooling.
+- **Dual-Objective LTR Ensemble:** Combines a relative ranker (`rank:pairwise`) and an NDCG ranker (`rank:ndcg`) to maximize top-of-list performance.
+- **Hierarchical Skill Ontology Mapping:** Maps child terms (e.g. `PyTorch`, `LLMs`) back to parent concepts (`Deep Learning`, `NLP`) to prevent string matching misses.
 
 ---
 
@@ -41,22 +47,22 @@ pip install -r requirements.txt
 
 ---
 
-### Pipeline Orchestration (A to Z)
+## Pipeline Orchestration (A to Z)
 
 #### Step 1: Rebuild the Database
-Extracts all raw candidate JSONL fields (career accomplishments, certifications, education majors/grades) into a rich text format and stores them in SQLite:
+Extracts all raw candidate JSONL fields (career accomplishments, certifications, education majors/grades) into a rich text format, generates natural-language skill sentences, and stores them in SQLite:
 ```bash
 python src/build_db.py
 ```
 
-#### Step 2: Generate Dense Embeddings
-Computes 768-dimensional normalized dense embeddings locally using the BAAI/bge-base-en-v1.5 model on the rich candidate text:
+#### Step 2: Generate Dense Section Embeddings
+Splits profiles into 4 key sections and generates 768-dimensional normalized dense embeddings locally using the BAAI/bge-base-en-v1.5 model:
 ```bash
 python src/embed_candidates_jsonl.py
 ```
 
 #### Step 3: Embed the Job Description
-Processes and encodes the Job Description document to create the dense search vector:
+Applies the TF-IDF Section Classifier to paragraph-pool and encode the Job Description document to create the dense search vector:
 ```bash
 python src/embed_jd.py
 ```
@@ -81,7 +87,7 @@ python src/generate_training_data.py
 ```
 
 #### Step 7: Train the XGBoost LTR Student
-Trains the pairwise `XGBRanker` on the distilled training dataset using all 46 engineered features:
+Trains both the pairwise and NDCG-optimized `XGBRanker` models on the distilled training dataset using all 46 engineered features:
 ```bash
 python src/train_ltr.py
 ```
@@ -93,7 +99,7 @@ python src/evaluate_pipeline.py
 ```
 
 #### Step 9: Generate Final Submission
-Executes the final inference funnel, applying LTR, Cross-Encoder blending, MMR diversity filtering, and structured explainability parsing. Outputs `team_submission.csv`:
+Executes the final inference funnel, applying LTR ensemble blending, Cross-Encoder blending, MMR diversity filtering, and structured explainability parsing. Outputs `team_submission.csv`:
 ```bash
 python src/generate_submission.py
 ```
@@ -109,9 +115,11 @@ python "Dataset and references/validate_submission.py" team_submission.csv
 ## 📊 Evaluation & Ablation Metrics
 
 Running `python src/evaluate_pipeline.py` outputs the pipeline's NDCG@100 on unseen holdout validation candidates:
-- **Stage 1 & 2 (Hybrid RRF):** ~0.6930
-- **Stage 5 (XGBoost LTR):** ~0.9518 (massive semantic generalization!)
-- **Stage 6 (Cross-Encoder):** 1.0000 (teacher reference ceiling)
+- **Baseline Hybrid Search (RRF Score):** `0.5646`
+- **XGBoost LTR Pairwise Model:** `0.7554`
+- **XGBoost LTR NDCG Model:** `0.6911`
+- **Blended Dual-Objective LTR Ensemble:** **`0.7482`** (A massive **+18.3% absolute gain** over hybrid search!)
+- **Neural Cross-Encoder (Teacher Gold Ceiling):** `1.0000`
 
 ---
 
