@@ -123,7 +123,8 @@ def main():
     # 4. Stage 5: CrossEncoder Re-ranking
     print("\nLoading CrossEncoder for Stage 5 Top-N Re-ranking...")
     ce_model = CrossEncoder('cross-encoder/ms-marco-MiniLM-L-6-v2', max_length=512)
-    jd_trunc = jd_text[:1000]
+    # Give the model the title/context, plus the explicit requirements section
+    jd_trunc = jd_text[:300] + "\n...[Requirements]...\n" + jd_text[3800:5200]
     
     print("Running CrossEncoder inference on Top 200 candidates...")
     ce_pairs = [(jd_trunc, str(txt)[:1000]) for txt in top_200["full_text"]]

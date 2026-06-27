@@ -44,7 +44,8 @@ def generate_training_data():
     
     print("\nLoading CrossEncoder for Knowledge Distillation (Local Inference)...")
     ce_model = CrossEncoder('cross-encoder/ms-marco-MiniLM-L-6-v2', max_length=512)
-    jd_trunc = jd_text[:1000]
+    # Give the model the title/context, plus the explicit requirements section
+    jd_trunc = jd_text[:300] + "\n...[Requirements]...\n" + jd_text[3800:5200]
     
     dataset = []
     
