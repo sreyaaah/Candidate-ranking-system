@@ -1,16 +1,14 @@
-import sys
-import os
-import streamlit as st
+import numpy as np
 import pandas as pd
 import sqlite3
+import os
+import sys
 import xgboost as xgb
-from docx import Document
 
-sys.path.append("src")
+# Ensure src is in the path to import search_hybrid
+sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 from search_hybrid import get_hybrid_scores
-
-st.set_page_config(layout="wide", page_title="INDIA.RUNS Candidate Ranking")
-st.title("AI Candidate Ranking System - LTR")
+from docx import Document
 
 required_skills = [
     "python",
@@ -20,20 +18,23 @@ required_skills = [
     "sql"
 ]
 
-@st.cache_data
-def get_rankings():
+def main():
+    print("Loading Job Description...")
     doc = Document("data/jobs/job_description.docx")
     jd_text = "\n".join([para.text for para in doc.paragraphs])
     
+    # 1. Stage 1 & 2: Hybrid Retrieval
     top_n = 2000
     hybrid_results = get_hybrid_scores(jd_text, top_n=top_n)
     
+    print("\nFetching features from database...")
     candidate_ids = [res[0] for res in hybrid_results]
     
+    # 2. Stage 3: Feature Engineering lookups
     conn = sqlite3.connect("data/candidates.db")
     cursor = conn.cursor()
-    placeholders = ",".join(["?"] * len(candidate_ids))
     
+    placeholders = ",".join(["?"] * len(candidate_ids))
     query = f"""
         SELECT 
             c.id, c.skills, 
@@ -56,8 +57,10 @@ def get_rankings():
             "education_tier": row[6] or 3,
             "notice_period": row[7] or 0
         }
+        
     conn.close()
     
+    # Prepare DataFrame for XGBoost Inference
     dataset = []
     
     for cand_id, rrf_score in hybrid_results:
@@ -68,7 +71,7 @@ def get_rankings():
         skill_score = matched / len(required_skills)
             
         dataset.append({
-            "Candidate ID": cand_id,
+            "candidate_id": cand_id,
             "rrf_score": rrf_score,
             "skill_score": skill_score,
             "yoe": feats.get("yoe", 0.0),
@@ -81,6 +84,8 @@ def get_rankings():
         
     df = pd.DataFrame(dataset)
     
+    # 3. Stage 4: Learning-to-Rank Inference
+    print("Loading XGBoost Ranker model...")
     ranker = xgb.XGBRanker()
     ranker.load_model("models/xgb_ranker.json")
     
@@ -89,30 +94,21 @@ def get_rankings():
         "job_hopping_index", "github_score", "education_tier", "notice_period"
     ]
     
+    print("Re-scoring candidates using ML model...")
     X = df[features]
-    df["ML Score"] = ranker.predict(X)
+    predictions = ranker.predict(X)
     
-    df = df.sort_values(by="ML Score", ascending=False).reset_index(drop=True)
+    df["ml_score"] = predictions
     
-    # Clean up column names for display
-    df.rename(columns={
-        "rrf_score": "RRF Score",
-        "skill_score": "Skill Score",
-        "yoe": "YoE",
-        "ai_years": "AI Years",
-        "job_hopping_index": "Job Hopping Index",
-        "github_score": "GitHub Score",
-        "education_tier": "Edu Tier",
-        "notice_period": "Notice Period (Days)"
-    }, inplace=True)
+    # Sort by ML score
+    df = df.sort_values(by="ml_score", ascending=False).reset_index(drop=True)
     
-    return df
+    print("\nFinal ML Candidate Ranking (Top 20):\n")
+    for i in range(min(20, len(df))):
+        c = df.iloc[i]
+        print(f"{i+1}. {c['candidate_id']}")
+        print(f"   ML Rank Score: {c['ml_score']:.4f}")
+        print(f"   YoE: {c['yoe']:.1f} | Edu: Tier {c['education_tier']} | Notice: {c['notice_period']}d | RRF: {c['rrf_score']:.4f}\n")
 
-st.markdown("### Job Description Features")
-st.write(f"**Required Skills:** {', '.join(required_skills)}")
-
-with st.spinner('Running XGBoost Learning-to-Rank inference...'):
-    df = get_rankings()
-
-st.subheader(f"Top {len(df)} Ranked Candidates (ML Optimized)")
-st.dataframe(df, use_container_width=True)
+if __name__ == "__main__":
+    main()
