@@ -9,19 +9,15 @@ from sentence_transformers import CrossEncoder
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 from search_hybrid import get_hybrid_scores
 from docx import Document
-
-required_skills = [
-    "python",
-    "react",
-    "node.js",
-    "docker",
-    "sql"
-]
+from extract_skills import extract_required_skills
 
 def generate_training_data():
     print("Loading Job Description...")
     doc = Document("data/jobs/job_description.docx")
     jd_text = "\n".join([para.text for para in doc.paragraphs])
+    
+    required_skills = extract_required_skills(jd_text)
+    print(f"Dynamically extracted JD skills: {required_skills}")
     
     top_n = 4000
     hybrid_results = get_hybrid_scores(jd_text, top_n=top_n)

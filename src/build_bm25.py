@@ -21,18 +21,21 @@ def build_bm25():
     cursor.execute("SELECT id, full_text FROM candidates")
     
     candidate_ids = []
-    tokenized_corpus = []
-    
     rows = cursor.fetchall()
+    corpus = [row[1] for row in rows]
+    candidate_ids = [row[0] for row in rows]
+    
     print(f"Found {len(rows)} candidates. Tokenizing...")
     
-    for row in tqdm(rows):
-        cand_id, text = row
-        candidate_ids.append(cand_id)
-        tokenized_corpus.append(tokenize(text))
+    # Custom tokenizer that preserves things like C++ and Node.js
+    def custom_tokenize(text):
+        if not text: return []
+        return re.findall(r"(?i)\b[a-z0-9_+#.]+\b", text.lower())
+
+    tokenized_corpus = []
+    for doc in tqdm(corpus, desc="Tokenizing documents"):
+        tokenized_corpus.append(custom_tokenize(doc))
         
-    conn.close()
-    
     print("Building BM25 index...")
     bm25 = BM25Okapi(tokenized_corpus)
     

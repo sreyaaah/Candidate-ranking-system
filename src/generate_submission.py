@@ -13,70 +13,21 @@ from sklearn.metrics.pairwise import cosine_similarity
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 from search_hybrid import get_hybrid_scores
 from docx import Document
-
-required_skills = [
-    "python",
-    "react",
-    "node.js",
-    "docker",
-    "sql"
-]
-
-def generate_reasoning(row):
-    """
-    Stage 7 - Explainability
-    Generates a 1-2 sentence evidence-based reasoning string.
-    """
-    yoe = float(row.get("yoe", 0.0))
-    tier = int(row.get("education_tier", 3))
-    notice = int(row.get("notice_period", 0))
-    github = float(row.get("github_score", 0.0))
-    skill = float(row.get("skill_score", 0.0))
-    ai_years = float(row.get("ai_years", 0.0))
-    hop_index = float(row.get("job_hopping_index", 0.0))
-    
-    tier_str = "Tier 1" if tier == 1 else "Tier 2" if tier == 2 else "Tier 3"
-    
-    reasons = []
-    
-    if ai_years > 0:
-        reasons.append(f"Strong background with {yoe:.1f} YoE (including {ai_years:.1f} years focused on AI/ML).")
-    else:
-        reasons.append(f"Solid experience with {yoe:.1f} YoE.")
-        
-    if skill > 0.6:
-        reasons.append(f"Excellent keyword match for required skills (graduated from a {tier_str} institution).")
-    else:
-        reasons.append(f"Graduated from a {tier_str} institution with a decent skill baseline.")
-        
-    if github > 70:
-        reasons.append(f"Demonstrates highly active technical engagement (GitHub: {github:.1f}).")
-        
-    if hop_index > 24:
-        reasons.append("Shows great loyalty and career stability.")
-    elif hop_index < 12 and hop_index > 0:
-        reasons.append("Frequent job changes noted, but offset by strong technical fit.")
-        
-    if notice <= 30:
-        reasons.append("Favorable notice period allows immediate onboarding.")
-    elif notice > 60:
-        reasons.append(f"Notice period of {notice} days is a minor logistical risk.")
-        
-    # Stage 6 explicit mention
-    if row.get("diversity_promoted", False):
-        reasons.append("Candidate was actively promoted by the MMR algorithm to ensure structural team diversity.")
-        
-    return " ".join(reasons)
+from extract_skills import extract_required_skills
 
 def main():
     print("Loading Job Description...")
     doc = Document("data/jobs/job_description.docx")
     jd_text = "\n".join([para.text for para in doc.paragraphs])
     
-    # 1. Stage 1 & 2: Hybrid Retrieval
-    top_n = 2000
-    hybrid_results = get_hybrid_scores(jd_text, top_n=top_n)
+    required_skills = extract_required_skills(jd_text)
+    print(f"Dynamically extracted JD skills: {required_skills}")
     
+    # 1. Stage 2: Hybrid Retrieval (Top 2000)
+    top_n_hybrid = 2000
+    hybrid_results = get_hybrid_scores(jd_text, top_n=top_n_hybrid)
+    
+    # 2. Stage 3: Fetch Features
     print("\nFetching features from database...")
     candidate_ids = [res[0] for res in hybrid_results]
     
@@ -124,14 +75,18 @@ def main():
         if feats.get("honeypot_flag", 0) == 1: continue
         
         text = feats.get("skills", "")
-        matched = sum(1 for skill in required_skills if skill in text)
-        skill_score = matched / len(required_skills)
+        
+        matched_skills = [skill for skill in required_skills if skill in text]
+        missing_skills = [skill for skill in required_skills if skill not in text]
+        skill_score = len(matched_skills) / len(required_skills) if required_skills else 0
             
         dataset.append({
             "candidate_id": cand_id,
             "full_text": feats.get("full_text", ""),
             "rrf_score": rrf_score,
             "skill_score": skill_score,
+            "matched_skills": matched_skills,
+            "missing_skills": missing_skills,
             "yoe": feats.get("yoe", 0.0),
             "ai_years": feats.get("ai_years", 0.0),
             "job_hopping_index": feats.get("job_hopping_index", 0.0),
@@ -159,86 +114,121 @@ def main():
     ]
     X = df[features]
     df["ml_score"] = ranker.predict(X)
-    df = df.sort_values(by="ml_score", ascending=False).reset_index(drop=True)
-    df_top_200 = df.head(200).copy()
     
-    # 4. Stage 5: Cross-Encoder Re-Ranking
+    df = df.sort_values(by="ml_score", ascending=False).reset_index(drop=True)
+    
+    # Top 200 for Stage 5
+    top_200 = df.head(200).copy()
+    
+    # 4. Stage 5: CrossEncoder Re-ranking
     print("\nLoading CrossEncoder for Stage 5 Top-N Re-ranking...")
     ce_model = CrossEncoder('cross-encoder/ms-marco-MiniLM-L-6-v2', max_length=512)
     jd_trunc = jd_text[:1000]
-    ce_pairs = [(jd_trunc, str(text)[:1000]) for text in df_top_200["full_text"]]
     
     print("Running CrossEncoder inference on Top 200 candidates...")
+    ce_pairs = [(jd_trunc, str(txt)[:1000]) for txt in top_200["full_text"]]
     ce_scores = ce_model.predict(ce_pairs)
-    norm_ce_scores = 1 / (1 + np.exp(-ce_scores)) # Sigmoid
     
-    min_ml = df_top_200["ml_score"].min()
-    max_ml = df_top_200["ml_score"].max()
-    norm_ml_scores = (df_top_200["ml_score"] - min_ml) / (max_ml - min_ml + 1e-9)
-    df_top_200["final_score"] = (norm_ml_scores * 0.5) + (norm_ce_scores * 0.5)
+    # Normalize CE scores 0-1
+    norm_ce_scores = 1 / (1 + np.exp(-ce_scores))
+    top_200["ce_score"] = norm_ce_scores
     
-    # 5. Stage 6: Maximal Marginal Relevance (Diversity)
+    # Blend XGBoost (structural features) with CrossEncoder (semantic deep features)
+    # Using Min-Max scaling for ML score to blend them nicely
+    min_ml = top_200["ml_score"].min()
+    max_ml = top_200["ml_score"].max()
+    top_200["norm_ml_score"] = (top_200["ml_score"] - min_ml) / (max_ml - min_ml + 1e-9)
+    
+    top_200["final_score"] = (0.5 * top_200["norm_ml_score"]) + (0.5 * top_200["ce_score"])
+    
+    # Stage 6: MMR Diversity Re-ranking
     print("\nRunning Stage 6: MMR (Maximal Marginal Relevance) Diversity filtering...")
-    texts = df_top_200["full_text"].tolist()
+    
     vectorizer = TfidfVectorizer(stop_words='english', max_features=1000)
-    tfidf_matrix = vectorizer.fit_transform(texts)
+    tfidf_matrix = vectorizer.fit_transform(top_200["full_text"])
+    
     sim_matrix = cosine_similarity(tfidf_matrix)
     
-    # Extract needed arrays for fast computation
-    candidates = df_top_200.to_dict('records')
-    scores = np.array([c["final_score"] for c in candidates])
-    
     selected_indices = []
-    unselected_indices = list(range(len(candidates)))
+    unselected_indices = list(range(len(top_200)))
     
-    LAMBDA = 0.85 # 85% relevance, 15% diversity penalty
+    # Select the very best candidate first
+    best_idx = int(top_200["final_score"].idxmax())
+    selected_indices.append(best_idx)
+    unselected_indices.remove(best_idx)
     
-    while len(selected_indices) < 100 and unselected_indices:
-        if not selected_indices:
-            # First item is purely the most relevant
-            best_idx = unselected_indices[np.argmax(scores[unselected_indices])]
-        else:
-            # MMR formula
-            unsel_scores = scores[unselected_indices]
-            # Max similarity to ANY already selected candidate
-            sim_to_selected = sim_matrix[unselected_indices][:, selected_indices]
-            max_sims = np.max(sim_to_selected, axis=1)
-            
-            mmr_scores = (LAMBDA * unsel_scores) - ((1 - LAMBDA) * max_sims)
-            best_idx_in_unselected = np.argmax(mmr_scores)
-            best_idx = unselected_indices[best_idx_in_unselected]
-            
-            # Check if this candidate was promoted purely due to MMR
-            pure_relevance_idx = unselected_indices[np.argmax(unsel_scores)]
-            if best_idx != pure_relevance_idx:
-                candidates[best_idx]["diversity_promoted"] = True
-                
-        selected_indices.append(best_idx)
-        unselected_indices.remove(best_idx)
+    lambda_param = 0.85
+    final_100_count = 100
+    
+    while len(selected_indices) < final_100_count and unselected_indices:
+        max_mmr = -np.inf
+        best_candidate_idx = -1
         
-    final_candidates = [candidates[i] for i in selected_indices]
-    final_df = pd.DataFrame(final_candidates)
+        for idx in unselected_indices:
+            relevance = top_200.loc[idx, "final_score"]
+            # Max similarity to already selected candidates
+            sim_to_selected = max([sim_matrix[idx, s_idx] for s_idx in selected_indices])
+            
+            mmr_score = (lambda_param * relevance) - ((1 - lambda_param) * sim_to_selected)
+            
+            if mmr_score > max_mmr:
+                max_mmr = mmr_score
+                best_candidate_idx = idx
+                
+        selected_indices.append(best_candidate_idx)
+        unselected_indices.remove(best_candidate_idx)
+        
+    final_top_100 = top_200.iloc[selected_indices].copy()
     
-    # We must rename final_score to score for the validator
-    final_df.rename(columns={"final_score": "score"}, inplace=True)
+    # Create Structured Explainability 
+    def generate_reasoning(row):
+        conf = round(row['final_score'] * 100, 1)
+        
+        matched_str = ", ".join([f"✓ {s.capitalize()}" for s in row['matched_skills']]) if row['matched_skills'] else "None"
+        missing_str = ", ".join([f"✗ {s.capitalize()}" for s in row['missing_skills']]) if row['missing_skills'] else "None"
+        
+        highlights = []
+        if row['behavioral_score'] > 0: highlights.append("Leadership Experience")
+        if row['company_fit_score'] > 0: highlights.append("Top Tier Tech Background")
+        if row['education_tier'] == 1: highlights.append("Tier 1 Education")
+        if row['career_trajectory_score'] > 0: highlights.append("Upward Career Trajectory")
+        
+        hl_str = ", ".join(highlights) if highlights else "Standard Profile"
+        
+        reasoning = f"Confidence: {conf}% | "
+        reasoning += f"Matched: {matched_str} | "
+        reasoning += f"Missing: {missing_str} | "
+        reasoning += f"Highlights: {hl_str} | "
+        
+        risk = []
+        if row['notice_period'] > 60:
+            risk.append(f"High notice period ({row['notice_period']} days)")
+        if row['job_hopping_index'] < 12 and row['yoe'] > 3:
+            risk.append("Frequent job hopper")
+            
+        if risk:
+            reasoning += f"Risks: {', '.join(risk)}"
+            
+        return reasoning
+
+    final_top_100["reasoning"] = final_top_100.apply(generate_reasoning, axis=1)
     
-    # Round score BEFORE sorting so tie-breakers are accurate for the CSV
-    final_df["score"] = final_df["score"].round(4)
+    # We must format to exactly: candidate_id, rank, score, reasoning
+    # Round to 4 decimals BEFORE sorting to avoid floating point tie-breaker chaos
+    final_top_100["score"] = final_top_100["final_score"].round(4)
     
-    # Format tie breaking securely
-    final_df = final_df.sort_values(by=["score", "candidate_id"], ascending=[False, True]).reset_index(drop=True)
-    final_df["rank"] = range(1, 101)
+    # Sort strictly by score DESC, candidate_id ASC for tie-breakers (per hackathon spec)
+    final_top_100 = final_top_100.sort_values(by=["score", "candidate_id"], ascending=[False, True]).reset_index(drop=True)
     
-    # Add Reasoning
-    final_df["reasoning"] = final_df.apply(generate_reasoning, axis=1)
+    final_top_100["rank"] = final_top_100.index + 1
     
-    # Output to Submission Format
-    submission_df = final_df[["candidate_id", "rank", "score", "reasoning"]]
+    submission_df = final_top_100[["candidate_id", "rank", "score", "reasoning"]]
     
-    output_filename = "team_submission.csv"
-    submission_df.to_csv(output_filename, index=False, quoting=csv.QUOTE_MINIMAL)
-    
-    print(f"\nSuccessfully generated {output_filename} with exactly 100 diverse rows.")
+    if len(submission_df) != 100:
+        print(f"WARNING: Output has {len(submission_df)} rows, expected 100!")
+        
+    submission_df.to_csv("team_submission.csv", index=False)
+    print("\nSuccessfully generated team_submission.csv with exactly 100 diverse rows.")
 
 if __name__ == "__main__":
     main()

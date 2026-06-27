@@ -8,7 +8,7 @@ from rank_bm25 import BM25Okapi
 def tokenize(text):
     if not text:
         return []
-    return [word for word in re.split(r'\W+', text.lower()) if word]
+    return re.findall(r"(?i)\b[a-z0-9_+#.]+\b", text.lower())
 
 def get_hybrid_scores(jd_text, k_rrf=60, top_n=2000):
     # 1. Load dense resources
