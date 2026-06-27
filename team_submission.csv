@@ -1,101 +1,101 @@
 candidate_id,rank,score,reasoning
-CAND_0002025,1,4.3609,Candidate selected due to 5.9 years of experience and Tier 1 educational background. Demonstrates exceptionally strong technical engagement (GitHub score: 96.9). Highly favorable notice period allows for immediate onboarding.
-CAND_0002120,2,4.3609,Candidate selected due to 6.5 years of experience and Tier 1 educational background. Solid overall fit for the required technical stack.
-CAND_0003977,3,4.3308,Candidate selected due to 4.6 years of experience and Tier 1 educational background. Solid overall fit for the required technical stack.
-CAND_0001600,4,4.3288,Candidate selected due to 6.2 years of experience and Tier 3 educational background. Demonstrates exceptionally strong technical engagement (GitHub score: 72.0). Notice period of 120 days is a minor risk but offset by strong semantic match.
-CAND_0002526,5,4.2739,Candidate selected due to 5.4 years of experience and Tier 2 educational background. Solid overall fit for the required technical stack.
-CAND_0001056,6,4.2636,Candidate selected due to 5.1 years of experience and Tier 3 educational background. Notice period of 90 days is a minor risk but offset by strong semantic match.
-CAND_0004112,7,4.2275,Candidate selected due to 6.5 years of experience and Tier 2 educational background. Notice period of 120 days is a minor risk but offset by strong semantic match.
-CAND_0000165,8,4.059,Candidate selected due to 6.8 years of experience and Tier 1 educational background. Notice period of 120 days is a minor risk but offset by strong semantic match.
-CAND_0002706,9,4.059,Candidate selected due to 6.9 years of experience and Tier 1 educational background. Demonstrates exceptionally strong technical engagement (GitHub score: 78.9). Notice period of 90 days is a minor risk but offset by strong semantic match.
-CAND_0004534,10,4.0542,Candidate selected due to 4.2 years of experience and Tier 3 educational background. Demonstrates exceptionally strong technical engagement (GitHub score: 72.9). Notice period of 120 days is a minor risk but offset by strong semantic match.
-CAND_0004500,11,3.9937,Candidate selected due to 5.9 years of experience and Tier 3 educational background. Highly favorable notice period allows for immediate onboarding.
-CAND_0001808,12,3.9794,Candidate selected due to 3.8 years of experience and Tier 3 educational background. Highly favorable notice period allows for immediate onboarding.
-CAND_0001328,13,3.9609,Candidate selected due to 5.4 years of experience and Tier 3 educational background. Notice period of 90 days is a minor risk but offset by strong semantic match.
-CAND_0004114,14,3.8934,Candidate selected due to 4.9 years of experience and Tier 3 educational background. Solid overall fit for the required technical stack.
-CAND_0004628,15,3.7764,Candidate selected due to 3.3 years of experience and Tier 3 educational background. Notice period of 90 days is a minor risk but offset by strong semantic match.
-CAND_0004389,16,3.7501,Candidate selected due to 5.8 years of experience and Tier 2 educational background. Notice period of 120 days is a minor risk but offset by strong semantic match.
-CAND_0003609,17,3.7485,Candidate selected due to 6.1 years of experience and Tier 3 educational background. Solid overall fit for the required technical stack.
-CAND_0001267,18,3.7005,Candidate selected due to 6.1 years of experience and Tier 1 educational background. Solid overall fit for the required technical stack.
-CAND_0001494,19,3.668,Candidate selected due to 6.4 years of experience and Tier 2 educational background. Notice period of 90 days is a minor risk but offset by strong semantic match.
-CAND_0001131,20,3.6114,Candidate selected due to 5.8 years of experience and Tier 1 educational background. Notice period of 90 days is a minor risk but offset by strong semantic match.
-CAND_0000112,21,3.5779,Candidate selected due to 3.8 years of experience and Tier 1 educational background. Demonstrates exceptionally strong technical engagement (GitHub score: 79.4). Solid overall fit for the required technical stack.
-CAND_0000665,22,3.5106,Candidate selected due to 6.2 years of experience and Tier 2 educational background. Notice period of 90 days is a minor risk but offset by strong semantic match.
-CAND_0003756,23,3.4951,Candidate selected due to 6.5 years of experience and Tier 3 educational background. Notice period of 90 days is a minor risk but offset by strong semantic match.
-CAND_0004397,24,3.4789,Candidate selected due to 8.3 years of experience and Tier 3 educational background. Notice period of 120 days is a minor risk but offset by strong semantic match.
-CAND_0003599,25,3.1787,Candidate selected due to 6.5 years of experience and Tier 1 educational background. Solid overall fit for the required technical stack.
-CAND_0003882,26,3.1329,Candidate selected due to 4.5 years of experience and Tier 3 educational background. Solid overall fit for the required technical stack.
-CAND_0001126,27,3.0205,Candidate selected due to 4.9 years of experience and Tier 3 educational background. Demonstrates exceptionally strong technical engagement (GitHub score: 77.6). Solid overall fit for the required technical stack.
-CAND_0004728,28,2.9999,Candidate selected due to 6.6 years of experience and Tier 3 educational background. Solid overall fit for the required technical stack.
-CAND_0000859,29,2.9202,Candidate selected due to 5.9 years of experience and Tier 3 educational background. Demonstrates exceptionally strong technical engagement (GitHub score: 74.3). Notice period of 90 days is a minor risk but offset by strong semantic match.
-CAND_0004761,30,2.6925,Candidate selected due to 1.5 years of experience and Tier 3 educational background. Solid overall fit for the required technical stack.
-CAND_0004047,31,2.638,Candidate selected due to 5.6 years of experience and Tier 3 educational background. Solid overall fit for the required technical stack.
-CAND_0001610,32,2.2769,Candidate selected due to 3.0 years of experience and Tier 2 educational background. Notice period of 90 days is a minor risk but offset by strong semantic match.
-CAND_0003511,33,1.9998,Candidate selected due to 7.4 years of experience and Tier 3 educational background. Notice period of 90 days is a minor risk but offset by strong semantic match.
-CAND_0003918,34,1.85,Candidate selected due to 5.6 years of experience and Tier 1 educational background. Notice period of 120 days is a minor risk but offset by strong semantic match.
-CAND_0003833,35,1.3831,Candidate selected due to 4.0 years of experience and Tier 3 educational background. Notice period of 90 days is a minor risk but offset by strong semantic match.
-CAND_0000031,36,0.7566,Candidate selected due to 6.0 years of experience and Tier 2 educational background. Solid overall fit for the required technical stack.
-CAND_0000273,37,0.5938,Candidate selected due to 5.8 years of experience and Tier 3 educational background. Solid overall fit for the required technical stack.
-CAND_0002770,38,0.5532,Candidate selected due to 5.7 years of experience and Tier 1 educational background. Notice period of 120 days is a minor risk but offset by strong semantic match.
-CAND_0000969,39,0.5395,Candidate selected due to 5.5 years of experience and Tier 3 educational background. Solid overall fit for the required technical stack.
-CAND_0002391,40,0.5395,Candidate selected due to 5.9 years of experience and Tier 3 educational background. Solid overall fit for the required technical stack.
-CAND_0000422,41,0.5216,Candidate selected due to 6.3 years of experience and Tier 3 educational background. Notice period of 90 days is a minor risk but offset by strong semantic match.
-CAND_0001940,42,0.5101,Candidate selected due to 4.3 years of experience and Tier 2 educational background. Notice period of 90 days is a minor risk but offset by strong semantic match.
-CAND_0000198,43,0.4442,Candidate selected due to 6.3 years of experience and Tier 3 educational background. Notice period of 90 days is a minor risk but offset by strong semantic match.
-CAND_0001841,44,0.4187,Candidate selected due to 9.8 years of experience and Tier 3 educational background. Notice period of 120 days is a minor risk but offset by strong semantic match.
-CAND_0002724,45,0.4187,Candidate selected due to 9.5 years of experience and Tier 3 educational background. Notice period of 120 days is a minor risk but offset by strong semantic match.
-CAND_0000189,46,0.4032,Candidate selected due to 3.7 years of experience and Tier 2 educational background. Highly favorable notice period allows for immediate onboarding.
-CAND_0001389,47,0.3984,Candidate selected due to 3.1 years of experience and Tier 3 educational background. Solid overall fit for the required technical stack.
-CAND_0003259,48,0.3848,Candidate selected due to 7.7 years of experience and Tier 1 educational background. Notice period of 90 days is a minor risk but offset by strong semantic match.
-CAND_0000180,49,0.3806,Candidate selected due to 8.5 years of experience and Tier 3 educational background. Notice period of 90 days is a minor risk but offset by strong semantic match.
-CAND_0004673,50,0.3806,Candidate selected due to 12.1 years of experience and Tier 3 educational background. Notice period of 150 days is a minor risk but offset by strong semantic match.
-CAND_0003820,51,0.3334,Candidate selected due to 12.5 years of experience and Tier 3 educational background. Notice period of 90 days is a minor risk but offset by strong semantic match.
-CAND_0003871,52,0.3315,Candidate selected due to 7.7 years of experience and Tier 3 educational background. Highly favorable notice period allows for immediate onboarding.
-CAND_0004669,53,0.211,Candidate selected due to 2.6 years of experience and Tier 3 educational background. Notice period of 90 days is a minor risk but offset by strong semantic match.
-CAND_0000249,54,0.1919,Candidate selected due to 9.1 years of experience and Tier 3 educational background. Highly favorable notice period allows for immediate onboarding.
-CAND_0001767,55,0.1782,Candidate selected due to 8.3 years of experience and Tier 2 educational background. Notice period of 90 days is a minor risk but offset by strong semantic match.
-CAND_0000375,56,0.1106,Candidate selected due to 1.9 years of experience and Tier 2 educational background. Solid overall fit for the required technical stack.
-CAND_0000816,57,0.1106,Candidate selected due to 1.8 years of experience and Tier 2 educational background. Solid overall fit for the required technical stack.
-CAND_0004626,58,0.1088,Candidate selected due to 2.0 years of experience and Tier 1 educational background. Notice period of 90 days is a minor risk but offset by strong semantic match.
-CAND_0000819,59,0.0916,Candidate selected due to 3.6 years of experience and Tier 3 educational background. Notice period of 90 days is a minor risk but offset by strong semantic match.
-CAND_0000035,60,0.0736,Candidate selected due to 4.3 years of experience and Tier 3 educational background. Solid overall fit for the required technical stack.
-CAND_0001845,61,0.0115,Candidate selected due to 3.4 years of experience and Tier 3 educational background. Solid overall fit for the required technical stack.
-CAND_0000633,62,0.0072,Candidate selected due to 6.4 years of experience and Tier 1 educational background. Solid overall fit for the required technical stack.
-CAND_0003278,63,-0.0096,Candidate selected due to 1.5 years of experience and Tier 3 educational background. Notice period of 90 days is a minor risk but offset by strong semantic match.
-CAND_0004505,64,-0.0402,Candidate selected due to 13.6 years of experience and Tier 3 educational background. Solid overall fit for the required technical stack.
-CAND_0002387,65,-0.0706,Candidate selected due to 4.1 years of experience and Tier 3 educational background. Notice period of 90 days is a minor risk but offset by strong semantic match.
-CAND_0002560,66,-0.0819,Candidate selected due to 3.9 years of experience and Tier 3 educational background. Solid overall fit for the required technical stack.
-CAND_0003557,67,-0.1209,Candidate selected due to 6.8 years of experience and Tier 1 educational background. Notice period of 90 days is a minor risk but offset by strong semantic match.
-CAND_0002761,68,-0.1529,Candidate selected due to 10.4 years of experience and Tier 2 educational background. Solid overall fit for the required technical stack.
-CAND_0001001,69,-0.1764,Candidate selected due to 6.7 years of experience and Tier 3 educational background. Solid overall fit for the required technical stack.
-CAND_0001218,70,-0.2038,Candidate selected due to 6.4 years of experience and Tier 1 educational background. Notice period of 90 days is a minor risk but offset by strong semantic match.
-CAND_0004900,71,-0.2048,Candidate selected due to 5.4 years of experience and Tier 3 educational background. Highly favorable notice period allows for immediate onboarding.
-CAND_0004167,72,-0.2066,Candidate selected due to 7.5 years of experience and Tier 3 educational background. Highly favorable notice period allows for immediate onboarding.
-CAND_0000235,73,-0.22,Candidate selected due to 10.4 years of experience and Tier 3 educational background. Highly favorable notice period allows for immediate onboarding.
-CAND_0000310,74,-0.2611,Candidate selected due to 5.6 years of experience and Tier 2 educational background. Highly favorable notice period allows for immediate onboarding.
-CAND_0003575,75,-0.3025,Candidate selected due to 3.7 years of experience and Tier 1 educational background. Solid overall fit for the required technical stack.
-CAND_0001651,76,-0.3238,Candidate selected due to 6.5 years of experience and Tier 1 educational background. Notice period of 90 days is a minor risk but offset by strong semantic match.
-CAND_0004477,77,-0.3435,Candidate selected due to 9.6 years of experience and Tier 3 educational background. Highly favorable notice period allows for immediate onboarding.
-CAND_0001071,78,-0.3492,Candidate selected due to 7.3 years of experience and Tier 2 educational background. Solid overall fit for the required technical stack.
-CAND_0004972,79,-0.3696,Candidate selected due to 6.0 years of experience and Tier 1 educational background. Notice period of 90 days is a minor risk but offset by strong semantic match.
-CAND_0001147,80,-0.4121,Candidate selected due to 11.8 years of experience and Tier 3 educational background. Notice period of 120 days is a minor risk but offset by strong semantic match.
-CAND_0000650,81,-0.4156,Candidate selected due to 14.8 years of experience and Tier 3 educational background. Notice period of 120 days is a minor risk but offset by strong semantic match.
-CAND_0004121,82,-0.4361,Candidate selected due to 3.0 years of experience and Tier 2 educational background. Highly favorable notice period allows for immediate onboarding.
-CAND_0004658,83,-0.4433,Candidate selected due to 8.0 years of experience and Tier 2 educational background. Notice period of 90 days is a minor risk but offset by strong semantic match.
-CAND_0001707,84,-0.4599,Candidate selected due to 5.6 years of experience and Tier 3 educational background. Notice period of 90 days is a minor risk but offset by strong semantic match.
-CAND_0002588,85,-0.4933,Candidate selected due to 4.2 years of experience and Tier 2 educational background. Solid overall fit for the required technical stack.
-CAND_0003506,86,-0.5438,Candidate selected due to 5.9 years of experience and Tier 2 educational background. Notice period of 90 days is a minor risk but offset by strong semantic match.
-CAND_0003534,87,-0.5737,Candidate selected due to 6.7 years of experience and Tier 3 educational background. Notice period of 120 days is a minor risk but offset by strong semantic match.
-CAND_0004962,88,-0.5746,Candidate selected due to 4.9 years of experience and Tier 2 educational background. Notice period of 120 days is a minor risk but offset by strong semantic match.
-CAND_0000731,89,-0.5772,Candidate selected due to 13.6 years of experience and Tier 3 educational background. Notice period of 90 days is a minor risk but offset by strong semantic match.
-CAND_0003692,90,-0.5785,Candidate selected due to 11.2 years of experience and Tier 3 educational background. Notice period of 90 days is a minor risk but offset by strong semantic match.
-CAND_0004320,91,-0.5885,Candidate selected due to 12.5 years of experience and Tier 2 educational background. Notice period of 90 days is a minor risk but offset by strong semantic match.
-CAND_0003864,92,-0.5977,Candidate selected due to 9.9 years of experience and Tier 2 educational background. Notice period of 90 days is a minor risk but offset by strong semantic match.
-CAND_0003290,93,-0.6041,Candidate selected due to 5.9 years of experience and Tier 3 educational background. Notice period of 120 days is a minor risk but offset by strong semantic match.
-CAND_0001672,94,-0.6127,Candidate selected due to 5.2 years of experience and Tier 2 educational background. Notice period of 90 days is a minor risk but offset by strong semantic match.
-CAND_0000139,95,-0.6338,Candidate selected due to 5.6 years of experience and Tier 3 educational background. Solid overall fit for the required technical stack.
-CAND_0002730,96,-0.6733,Candidate selected due to 14.7 years of experience and Tier 2 educational background. Solid overall fit for the required technical stack.
-CAND_0002551,97,-0.6773,Candidate selected due to 2.9 years of experience and Tier 3 educational background. Solid overall fit for the required technical stack.
-CAND_0001136,98,-0.6813,Candidate selected due to 9.5 years of experience and Tier 2 educational background. Notice period of 150 days is a minor risk but offset by strong semantic match.
-CAND_0001804,99,-0.6876,Candidate selected due to 4.3 years of experience and Tier 2 educational background. Highly favorable notice period allows for immediate onboarding.
-CAND_0000480,100,-0.6926,Candidate selected due to 5.9 years of experience and Tier 3 educational background. Notice period of 90 days is a minor risk but offset by strong semantic match.
+CAND_0002025,1,0.5015,Candidate selected due to 5.9 years of experience and Tier 1 educational background. Demonstrates exceptionally strong technical engagement (GitHub score: 96.9). Highly favorable notice period allows for immediate onboarding.
+CAND_0002120,2,0.5002,Candidate selected due to 6.5 years of experience and Tier 1 educational background. Solid overall fit for the required technical stack.
+CAND_0003977,3,0.4998,Candidate selected due to 4.6 years of experience and Tier 1 educational background. Solid overall fit for the required technical stack.
+CAND_0001600,4,0.4981,Candidate selected due to 6.2 years of experience and Tier 3 educational background. Demonstrates exceptionally strong technical engagement (GitHub score: 72.0). Notice period of 120 days is a minor risk but offset by strong semantic match.
+CAND_0001056,5,0.4945,Candidate selected due to 5.1 years of experience and Tier 3 educational background. Notice period of 90 days is a minor risk but offset by strong semantic match.
+CAND_0002526,6,0.4939,Candidate selected due to 5.4 years of experience and Tier 2 educational background. Solid overall fit for the required technical stack.
+CAND_0004112,7,0.4913,Candidate selected due to 6.5 years of experience and Tier 2 educational background. Notice period of 120 days is a minor risk but offset by strong semantic match.
+CAND_0004534,8,0.4793,Candidate selected due to 4.2 years of experience and Tier 3 educational background. Demonstrates exceptionally strong technical engagement (GitHub score: 72.9). Notice period of 120 days is a minor risk but offset by strong semantic match.
+CAND_0000165,9,0.4788,Candidate selected due to 6.8 years of experience and Tier 1 educational background. Notice period of 120 days is a minor risk but offset by strong semantic match.
+CAND_0002706,10,0.4786,Candidate selected due to 6.9 years of experience and Tier 1 educational background. Demonstrates exceptionally strong technical engagement (GitHub score: 78.9). Notice period of 90 days is a minor risk but offset by strong semantic match.
+CAND_0004500,11,0.475,Candidate selected due to 5.9 years of experience and Tier 3 educational background. Highly favorable notice period allows for immediate onboarding.
+CAND_0001808,12,0.4731,Candidate selected due to 3.8 years of experience and Tier 3 educational background. Highly favorable notice period allows for immediate onboarding.
+CAND_0001328,13,0.4722,Candidate selected due to 5.4 years of experience and Tier 3 educational background. Notice period of 90 days is a minor risk but offset by strong semantic match.
+CAND_0004114,14,0.4678,Candidate selected due to 4.9 years of experience and Tier 3 educational background. Solid overall fit for the required technical stack.
+CAND_0004628,15,0.4585,Candidate selected due to 3.3 years of experience and Tier 3 educational background. Notice period of 90 days is a minor risk but offset by strong semantic match.
+CAND_0003609,16,0.4573,Candidate selected due to 6.1 years of experience and Tier 3 educational background. Solid overall fit for the required technical stack.
+CAND_0004389,17,0.4569,Candidate selected due to 5.8 years of experience and Tier 2 educational background. Notice period of 120 days is a minor risk but offset by strong semantic match.
+CAND_0001267,18,0.4536,Candidate selected due to 6.1 years of experience and Tier 1 educational background. Solid overall fit for the required technical stack.
+CAND_0001494,19,0.4508,Candidate selected due to 6.4 years of experience and Tier 2 educational background. Notice period of 90 days is a minor risk but offset by strong semantic match.
+CAND_0001131,20,0.4468,Candidate selected due to 5.8 years of experience and Tier 1 educational background. Notice period of 90 days is a minor risk but offset by strong semantic match.
+CAND_0000112,21,0.4444,Candidate selected due to 3.8 years of experience and Tier 1 educational background. Demonstrates exceptionally strong technical engagement (GitHub score: 79.4). Solid overall fit for the required technical stack.
+CAND_0000665,22,0.44,Candidate selected due to 6.2 years of experience and Tier 2 educational background. Notice period of 90 days is a minor risk but offset by strong semantic match.
+CAND_0003756,23,0.4386,Candidate selected due to 6.5 years of experience and Tier 3 educational background. Notice period of 90 days is a minor risk but offset by strong semantic match.
+CAND_0004397,24,0.4378,Candidate selected due to 8.3 years of experience and Tier 3 educational background. Notice period of 120 days is a minor risk but offset by strong semantic match.
+CAND_0003599,25,0.4159,Candidate selected due to 6.5 years of experience and Tier 1 educational background. Solid overall fit for the required technical stack.
+CAND_0003882,26,0.413,Candidate selected due to 4.5 years of experience and Tier 3 educational background. Solid overall fit for the required technical stack.
+CAND_0001126,27,0.4047,Candidate selected due to 4.9 years of experience and Tier 3 educational background. Demonstrates exceptionally strong technical engagement (GitHub score: 77.6). Solid overall fit for the required technical stack.
+CAND_0004728,28,0.4041,Candidate selected due to 6.6 years of experience and Tier 3 educational background. Solid overall fit for the required technical stack.
+CAND_0000859,29,0.3983,Candidate selected due to 5.9 years of experience and Tier 3 educational background. Demonstrates exceptionally strong technical engagement (GitHub score: 74.3). Notice period of 90 days is a minor risk but offset by strong semantic match.
+CAND_0004761,30,0.3821,Candidate selected due to 1.5 years of experience and Tier 3 educational background. Solid overall fit for the required technical stack.
+CAND_0004047,31,0.3774,Candidate selected due to 5.6 years of experience and Tier 3 educational background. Solid overall fit for the required technical stack.
+CAND_0001610,32,0.3533,Candidate selected due to 3.0 years of experience and Tier 2 educational background. Notice period of 90 days is a minor risk but offset by strong semantic match.
+CAND_0003511,33,0.3324,Candidate selected due to 7.4 years of experience and Tier 3 educational background. Notice period of 90 days is a minor risk but offset by strong semantic match.
+CAND_0003918,34,0.3217,Candidate selected due to 5.6 years of experience and Tier 1 educational background. Notice period of 120 days is a minor risk but offset by strong semantic match.
+CAND_0003833,35,0.2884,Candidate selected due to 4.0 years of experience and Tier 3 educational background. Notice period of 90 days is a minor risk but offset by strong semantic match.
+CAND_0000031,36,0.2441,Candidate selected due to 6.0 years of experience and Tier 2 educational background. Solid overall fit for the required technical stack.
+CAND_0000273,37,0.2329,Candidate selected due to 5.8 years of experience and Tier 3 educational background. Solid overall fit for the required technical stack.
+CAND_0002770,38,0.2294,Candidate selected due to 5.7 years of experience and Tier 1 educational background. Notice period of 120 days is a minor risk but offset by strong semantic match.
+CAND_0000969,39,0.2284,Candidate selected due to 5.5 years of experience and Tier 3 educational background. Solid overall fit for the required technical stack.
+CAND_0002391,40,0.2282,Candidate selected due to 5.9 years of experience and Tier 3 educational background. Solid overall fit for the required technical stack.
+CAND_0000422,41,0.2269,Candidate selected due to 6.3 years of experience and Tier 3 educational background. Notice period of 90 days is a minor risk but offset by strong semantic match.
+CAND_0001940,42,0.2258,Candidate selected due to 4.3 years of experience and Tier 2 educational background. Notice period of 90 days is a minor risk but offset by strong semantic match.
+CAND_0001841,43,0.2224,Candidate selected due to 9.8 years of experience and Tier 3 educational background. Notice period of 120 days is a minor risk but offset by strong semantic match.
+CAND_0000198,44,0.2217,Candidate selected due to 6.3 years of experience and Tier 3 educational background. Notice period of 90 days is a minor risk but offset by strong semantic match.
+CAND_0002724,45,0.2197,Candidate selected due to 9.5 years of experience and Tier 3 educational background. Notice period of 120 days is a minor risk but offset by strong semantic match.
+CAND_0000189,46,0.2186,Candidate selected due to 3.7 years of experience and Tier 2 educational background. Highly favorable notice period allows for immediate onboarding.
+CAND_0003259,47,0.2181,Candidate selected due to 7.7 years of experience and Tier 1 educational background. Notice period of 90 days is a minor risk but offset by strong semantic match.
+CAND_0001389,48,0.2179,Candidate selected due to 3.1 years of experience and Tier 3 educational background. Solid overall fit for the required technical stack.
+CAND_0004673,49,0.2176,Candidate selected due to 12.1 years of experience and Tier 3 educational background. Notice period of 150 days is a minor risk but offset by strong semantic match.
+CAND_0000180,50,0.217,Candidate selected due to 8.5 years of experience and Tier 3 educational background. Notice period of 90 days is a minor risk but offset by strong semantic match.
+CAND_0003871,51,0.2138,Candidate selected due to 7.7 years of experience and Tier 3 educational background. Highly favorable notice period allows for immediate onboarding.
+CAND_0003820,52,0.2135,Candidate selected due to 12.5 years of experience and Tier 3 educational background. Notice period of 90 days is a minor risk but offset by strong semantic match.
+CAND_0004669,53,0.2048,Candidate selected due to 2.6 years of experience and Tier 3 educational background. Notice period of 90 days is a minor risk but offset by strong semantic match.
+CAND_0000249,54,0.2034,Candidate selected due to 9.1 years of experience and Tier 3 educational background. Highly favorable notice period allows for immediate onboarding.
+CAND_0001767,55,0.2023,Candidate selected due to 8.3 years of experience and Tier 2 educational background. Notice period of 90 days is a minor risk but offset by strong semantic match.
+CAND_0000816,56,0.1977,Candidate selected due to 1.8 years of experience and Tier 2 educational background. Solid overall fit for the required technical stack.
+CAND_0000375,57,0.1977,Candidate selected due to 1.9 years of experience and Tier 2 educational background. Solid overall fit for the required technical stack.
+CAND_0004626,58,0.1975,Candidate selected due to 2.0 years of experience and Tier 1 educational background. Notice period of 90 days is a minor risk but offset by strong semantic match.
+CAND_0000819,59,0.1963,Candidate selected due to 3.6 years of experience and Tier 3 educational background. Notice period of 90 days is a minor risk but offset by strong semantic match.
+CAND_0000035,60,0.1948,Candidate selected due to 4.3 years of experience and Tier 3 educational background. Solid overall fit for the required technical stack.
+CAND_0001845,61,0.1911,Candidate selected due to 3.4 years of experience and Tier 3 educational background. Solid overall fit for the required technical stack.
+CAND_0000633,62,0.1906,Candidate selected due to 6.4 years of experience and Tier 1 educational background. Solid overall fit for the required technical stack.
+CAND_0003278,63,0.1897,Candidate selected due to 1.5 years of experience and Tier 3 educational background. Notice period of 90 days is a minor risk but offset by strong semantic match.
+CAND_0004505,64,0.188,Candidate selected due to 13.6 years of experience and Tier 3 educational background. Solid overall fit for the required technical stack.
+CAND_0002387,65,0.1846,Candidate selected due to 4.1 years of experience and Tier 3 educational background. Notice period of 90 days is a minor risk but offset by strong semantic match.
+CAND_0002560,66,0.1841,Candidate selected due to 3.9 years of experience and Tier 3 educational background. Solid overall fit for the required technical stack.
+CAND_0003557,67,0.1808,Candidate selected due to 6.8 years of experience and Tier 1 educational background. Notice period of 90 days is a minor risk but offset by strong semantic match.
+CAND_0002761,68,0.1791,Candidate selected due to 10.4 years of experience and Tier 2 educational background. Solid overall fit for the required technical stack.
+CAND_0001001,69,0.1777,Candidate selected due to 6.7 years of experience and Tier 3 educational background. Solid overall fit for the required technical stack.
+CAND_0001218,70,0.1765,Candidate selected due to 6.4 years of experience and Tier 1 educational background. Notice period of 90 days is a minor risk but offset by strong semantic match.
+CAND_0004900,71,0.1755,Candidate selected due to 5.4 years of experience and Tier 3 educational background. Highly favorable notice period allows for immediate onboarding.
+CAND_0004167,72,0.1754,Candidate selected due to 7.5 years of experience and Tier 3 educational background. Highly favorable notice period allows for immediate onboarding.
+CAND_0000235,73,0.1743,Candidate selected due to 10.4 years of experience and Tier 3 educational background. Highly favorable notice period allows for immediate onboarding.
+CAND_0000310,74,0.1731,Candidate selected due to 5.6 years of experience and Tier 2 educational background. Highly favorable notice period allows for immediate onboarding.
+CAND_0003575,75,0.1679,Candidate selected due to 3.7 years of experience and Tier 1 educational background. Solid overall fit for the required technical stack.
+CAND_0001651,76,0.1667,Candidate selected due to 6.5 years of experience and Tier 1 educational background. Notice period of 90 days is a minor risk but offset by strong semantic match.
+CAND_0004477,77,0.1666,Candidate selected due to 9.6 years of experience and Tier 3 educational background. Highly favorable notice period allows for immediate onboarding.
+CAND_0001071,78,0.1648,Candidate selected due to 7.3 years of experience and Tier 2 educational background. Solid overall fit for the required technical stack.
+CAND_0004972,79,0.1632,Candidate selected due to 6.0 years of experience and Tier 1 educational background. Notice period of 90 days is a minor risk but offset by strong semantic match.
+CAND_0000650,80,0.1609,Candidate selected due to 14.8 years of experience and Tier 3 educational background. Notice period of 120 days is a minor risk but offset by strong semantic match.
+CAND_0001147,81,0.1608,Candidate selected due to 11.8 years of experience and Tier 3 educational background. Notice period of 120 days is a minor risk but offset by strong semantic match.
+CAND_0004121,82,0.1586,Candidate selected due to 3.0 years of experience and Tier 2 educational background. Highly favorable notice period allows for immediate onboarding.
+CAND_0004658,83,0.1585,Candidate selected due to 8.0 years of experience and Tier 2 educational background. Notice period of 90 days is a minor risk but offset by strong semantic match.
+CAND_0001707,84,0.1568,Candidate selected due to 5.6 years of experience and Tier 3 educational background. Notice period of 90 days is a minor risk but offset by strong semantic match.
+CAND_0002588,85,0.1544,Candidate selected due to 4.2 years of experience and Tier 2 educational background. Solid overall fit for the required technical stack.
+CAND_0003506,86,0.1523,Candidate selected due to 5.9 years of experience and Tier 2 educational background. Notice period of 90 days is a minor risk but offset by strong semantic match.
+CAND_0004962,87,0.1498,Candidate selected due to 4.9 years of experience and Tier 2 educational background. Notice period of 120 days is a minor risk but offset by strong semantic match.
+CAND_0003692,88,0.1493,Candidate selected due to 11.2 years of experience and Tier 3 educational background. Notice period of 90 days is a minor risk but offset by strong semantic match.
+CAND_0000731,89,0.1489,Candidate selected due to 13.6 years of experience and Tier 3 educational background. Notice period of 90 days is a minor risk but offset by strong semantic match.
+CAND_0003534,90,0.1487,Candidate selected due to 6.7 years of experience and Tier 3 educational background. Notice period of 120 days is a minor risk but offset by strong semantic match.
+CAND_0004320,91,0.1478,Candidate selected due to 12.5 years of experience and Tier 2 educational background. Notice period of 90 days is a minor risk but offset by strong semantic match.
+CAND_0003864,92,0.1473,Candidate selected due to 9.9 years of experience and Tier 2 educational background. Notice period of 90 days is a minor risk but offset by strong semantic match.
+CAND_0001672,93,0.1466,Candidate selected due to 5.2 years of experience and Tier 2 educational background. Notice period of 90 days is a minor risk but offset by strong semantic match.
+CAND_0003290,94,0.1465,Candidate selected due to 5.9 years of experience and Tier 3 educational background. Notice period of 120 days is a minor risk but offset by strong semantic match.
+CAND_0000139,95,0.1447,Candidate selected due to 5.6 years of experience and Tier 3 educational background. Solid overall fit for the required technical stack.
+CAND_0002551,96,0.1424,Candidate selected due to 2.9 years of experience and Tier 3 educational background. Solid overall fit for the required technical stack.
+CAND_0002730,97,0.1423,Candidate selected due to 14.7 years of experience and Tier 2 educational background. Solid overall fit for the required technical stack.
+CAND_0001136,98,0.1412,Candidate selected due to 9.5 years of experience and Tier 2 educational background. Notice period of 150 days is a minor risk but offset by strong semantic match.
+CAND_0001804,99,0.1406,Candidate selected due to 4.3 years of experience and Tier 2 educational background. Highly favorable notice period allows for immediate onboarding.
+CAND_0000480,100,0.1404,Candidate selected due to 5.9 years of experience and Tier 3 educational background. Notice period of 90 days is a minor risk but offset by strong semantic match.

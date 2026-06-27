@@ -106,6 +106,50 @@ def get_rankings():
         "notice_period": "Notice Period (Days)"
     }, inplace=True)
     
+    def generate_ui_reasoning(row):
+        yoe = float(row.get("YoE", 0.0))
+        tier = int(row.get("Edu Tier", 3))
+        notice = int(row.get("Notice Period (Days)", 0))
+        github = float(row.get("GitHub Score", 0.0))
+        skill = float(row.get("Skill Score", 0.0))
+        ai_years = float(row.get("AI Years", 0.0))
+        hop_index = float(row.get("Job Hopping Index", 0.0))
+        
+        tier_str = "Tier 1" if tier == 1 else "Tier 2" if tier == 2 else "Tier 3"
+        
+        reasons = []
+        
+        # Base Experience
+        if ai_years > 0:
+            reasons.append(f"Strong background with {yoe:.1f} YoE (including {ai_years:.1f} years focused on AI/ML).")
+        else:
+            reasons.append(f"Solid experience with {yoe:.1f} YoE.")
+            
+        # Education & Skills
+        if skill > 0.6:
+            reasons.append(f"Excellent keyword match for required skills (graduated from a {tier_str} institution).")
+        else:
+            reasons.append(f"Graduated from a {tier_str} institution with a decent skill baseline.")
+            
+        # Behavioral & Redrob Signals
+        if github > 70:
+            reasons.append(f"Demonstrates highly active technical engagement (GitHub: {github:.1f}).")
+            
+        if hop_index > 24:
+            reasons.append("Shows great loyalty and career stability.")
+        elif hop_index < 12 and hop_index > 0:
+            reasons.append("Frequent job changes noted, but offset by strong technical fit.")
+            
+        # Notice Period
+        if notice <= 30:
+            reasons.append("Favorable notice period allows immediate onboarding.")
+        elif notice > 60:
+            reasons.append(f"Notice period of {notice} days is a minor logistical risk.")
+            
+        return " ".join(reasons)
+        
+    df["Reasoning"] = df.apply(generate_ui_reasoning, axis=1)
+    
     return df
 
 st.markdown("### Job Description Features")
