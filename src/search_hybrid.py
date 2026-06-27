@@ -18,10 +18,24 @@ def get_hybrid_scores(jd_text, k_rrf=60, top_n=2000):
     with open("embeddings/resume_names.pkl", "rb") as f:
         dense_resume_names = pickle.load(f)
 
-    # Dense Search
-    k_dense = min(top_n, len(dense_resume_names))
+    # Dense Search on Section Index
+    k_dense = min(top_n * 4, len(dense_resume_names))
     dense_scores, dense_indices = index.search(jd_embedding.reshape(1, -1), k_dense)
     
+    # Late Fusion Aggregation: map section hits back to parent candidates, keeping the highest rank (Min Rank)
+    seen_candidates = {}
+    dense_candidate_list = []
+    
+    for idx in dense_indices[0]:
+        sec_id = dense_resume_names[idx]
+        # Split at the last underscore to get parent cand_id
+        parts = sec_id.rsplit("_", 1)
+        cand_id = parts[0]
+        
+        if cand_id not in seen_candidates:
+            seen_candidates[cand_id] = len(dense_candidate_list)
+            dense_candidate_list.append(cand_id)
+            
     # 2. Load sparse resources
     print("Loading BM25 index...")
     with open("embeddings/bm25_index.pkl", "rb") as f:
@@ -40,9 +54,8 @@ def get_hybrid_scores(jd_text, k_rrf=60, top_n=2000):
     # RRF calculation
     rrf_scores = {}
     
-    # Populate dense ranks
-    for rank, idx in enumerate(dense_indices[0]):
-        cand_id = dense_resume_names[idx]
+    # Populate dense ranks using late-fused candidate positions
+    for rank, cand_id in enumerate(dense_candidate_list[:top_n]):
         if cand_id not in rrf_scores:
             rrf_scores[cand_id] = 0.0
         rrf_scores[cand_id] += 1.0 / (k_rrf + rank + 1)

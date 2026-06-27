@@ -1,70 +1,80 @@
 from sentence_transformers import SentenceTransformer
 from docx import Document
 import numpy as np
-import re
+from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.metrics.pairwise import cosine_similarity
 
 print("Loading Job Description...")
 
 doc = Document("data/jobs/job_description.docx")
 
 paragraphs = []
-weights = []
-
-# Rule-based Section Classification keywords
-must_have_keywords = [r"must have", r"requirements", r"required skills", r"what we are looking for", r"what we need", r"experience required"]
-responsibilities_keywords = [r"responsibilities", r"what you'll do", r"role", r"expectations"]
-preferred_keywords = [r"preferred", r"nice to have", r"plus", r"desirable"]
-company_keywords = [r"about us", r"company", r"we are", r"our team", r"founding team"]
-benefits_keywords = [r"benefits", r"what we offer", r"perks", r"compensation"]
-equal_opportunity_keywords = [r"equal opportunity", r"diversity", r"inclusion"]
-
-def classify_paragraph_and_get_weight(text):
-    text_lower = text.lower()
-    
-    # Priority 1: Must Have / Core Requirements
-    if any(re.search(kw, text_lower) for kw in must_have_keywords):
-        return 6.0
-        
-    # Priority 2: Responsibilities / Day-to-Day
-    if any(re.search(kw, text_lower) for kw in responsibilities_keywords):
-        return 4.0
-        
-    # Priority 3: Preferred / Nice to Have
-    if any(re.search(kw, text_lower) for kw in preferred_keywords):
-        return 2.0
-        
-    # Priority 4: Company Profile
-    if any(re.search(kw, text_lower) for kw in company_keywords):
-        return 0.3
-        
-    # Priority 5: Benefits
-    if any(re.search(kw, text_lower) for kw in benefits_keywords):
-        return 0.2
-        
-    # Priority 6: Equal Opportunity
-    if any(re.search(kw, text_lower) for kw in equal_opportunity_keywords):
-        return 0.1
-        
-    # Default fallback
-    return 1.0
-
-current_section_weight = 1.0
-
 for para in doc.paragraphs:
     text = para.text.strip()
     if len(text) > 15:
-        # Detect if paragraph is a section header (short text, ending with colon or bold)
-        # If it's a section header, update the active section weight
-        if len(text) < 40 and (text.endswith(":") or para.style.name.startswith("Heading")):
-            current_section_weight = classify_paragraph_and_get_weight(text)
-            
         paragraphs.append(text)
-        weights.append(current_section_weight)
 
 print(f"Extracted {len(paragraphs)} paragraphs from JD.")
-print(f"Section weights preview (Max: {max(weights)}, Min: {min(weights)}, Mean: {np.mean(weights):.2f})")
 
-print("Loading BGE model...")
+# --- Upgraded: Unsupervised TF-IDF Section Classifier ---
+print("\nRunning TF-IDF Section Classifier...")
+
+# Define anchor documents representing each section type
+anchors = {
+    "must_have": "required skills qualifications requirements minimum basic must have experience criteria eligibility guidelines",
+    "responsibilities": "responsibilities duties role expectations what you will do tasks daily day to day project execution deliver",
+    "preferred": "preferred desired nice to have plus optional advantages extra beneficial secondary asset",
+    "company": "about us company profile overview culture mission vision team founding values background series startup",
+    "benefits": "benefits compensation perks health insurance leave salary equity package retirement bonus",
+    "equal_opportunity": "equal opportunity diversity inclusion gender race religion veteran disability gender identity sexual orientation"
+}
+
+anchor_names = list(anchors.keys())
+anchor_texts = list(anchors.values())
+
+# We vectorise the paragraphs and the anchors together
+vectorizer = TfidfVectorizer(stop_words='english')
+vectorizer.fit(paragraphs + anchor_texts)
+
+anchor_vectors = vectorizer.transform(anchor_texts)
+
+weights_map = {
+    "must_have": 6.0,
+    "responsibilities": 4.0,
+    "preferred": 2.0,
+    "company": 0.3,
+    "benefits": 0.2,
+    "equal_opportunity": 0.1
+}
+
+weights = []
+classified_counts = {name: 0 for name in anchor_names}
+classified_counts["default"] = 0
+
+for para in paragraphs:
+    para_vector = vectorizer.transform([para])
+    # Compute cosine similarity between paragraph and each section anchor
+    similarities = cosine_similarity(para_vector, anchor_vectors)[0]
+    
+    max_idx = np.argmax(similarities)
+    max_sim = similarities[max_idx]
+    
+    # Assign section if similarity is above a threshold, else default
+    if max_sim > 0.05:
+        section = anchor_names[max_idx]
+        weight = weights_map[section]
+        classified_counts[section] += 1
+    else:
+        weight = 1.0
+        classified_counts["default"] += 1
+        
+    weights.append(weight)
+
+print("Section Classification Results:")
+for sec, count in classified_counts.items():
+    print(f"  {sec:<18}: {count} paragraphs")
+
+print("\nLoading BGE model...")
 model = SentenceTransformer("BAAI/bge-base-en-v1.5")
 
 queries = [
@@ -81,7 +91,6 @@ embeddings = model.encode(
 
 print("Calculating document embedding (Section-Classified weighted pooling)...")
 weights = np.array(weights, dtype=np.float32)
-# Normalize to sum to 1.0
 weights = weights / np.sum(weights)
 
 final_jd_embedding = np.average(embeddings, axis=0, weights=weights)
