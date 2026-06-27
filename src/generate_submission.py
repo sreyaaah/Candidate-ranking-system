@@ -13,7 +13,7 @@ from sklearn.metrics.pairwise import cosine_similarity
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 from search_hybrid import get_hybrid_scores
 from docx import Document
-from extract_skills import extract_required_skills
+from extract_skills import extract_required_skills, match_skills_with_ontology
 
 def main():
     print("Loading Job Description...")
