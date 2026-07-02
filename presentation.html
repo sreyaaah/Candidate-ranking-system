@@ -1,0 +1,578 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Candidate Ranking System - System Presentation</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            --bg-color: #0b0f19;
+            --card-bg: rgba(17, 24, 39, 0.7);
+            --border-color: rgba(255, 255, 255, 0.08);
+            --primary: #8b5cf6;
+            --primary-glow: rgba(139, 92, 246, 0.4);
+            --secondary: #3b82f6;
+            --secondary-glow: rgba(59, 130, 246, 0.4);
+            --accent: #10b981;
+            --text-main: #f3f4f6;
+            --text-muted: #9ca3af;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            overflow: hidden;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            position: relative;
+        }
+
+        /* Ambient Background Glows */
+        .glow {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(120px);
+            z-index: 1;
+            pointer-events: none;
+            opacity: 0.4;
+        }
+
+        .glow-1 {
+            top: -10%;
+            left: 20%;
+            width: 450px;
+            height: 450px;
+            background: var(--primary-glow);
+        }
+
+        .glow-2 {
+            bottom: 10%;
+            right: 15%;
+            width: 500px;
+            height: 500px;
+            background: var(--secondary-glow);
+        }
+
+        /* Presentation Container */
+        .presentation-container {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem 4rem;
+            z-index: 2;
+        }
+
+        .slide {
+            display: none;
+            width: 100%;
+            max-width: 1200px;
+            animation: fadeEnter 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+
+        .slide.active {
+            display: block;
+        }
+
+        @keyframes fadeEnter {
+            from {
+                opacity: 0;
+                transform: translateY(20px) scale(0.98);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
+
+        /* Premium Headers */
+        h1, h2, h3 {
+            font-family: 'Space Grotesk', sans-serif;
+            font-weight: 700;
+        }
+
+        .slide-header {
+            margin-bottom: 2.5rem;
+        }
+
+        .slide-badge {
+            display: inline-block;
+            padding: 0.35rem 0.85rem;
+            background: rgba(139, 92, 246, 0.15);
+            border: 1px solid rgba(139, 92, 246, 0.3);
+            border-radius: 100px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: #c084fc;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            margin-bottom: 0.75rem;
+        }
+
+        .slide-title {
+            font-size: 2.5rem;
+            background: linear-gradient(135deg, #ffffff 30%, #a78bfa 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        /* Layout Grids */
+        .grid-2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2.5rem;
+        }
+
+        .grid-3 {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 1.5rem;
+        }
+
+        /* Glassmorphic Cards */
+        .card {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 20px;
+            padding: 2rem;
+            backdrop-filter: blur(16px);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            transition: all 0.3s ease;
+        }
+
+        .card:hover {
+            border-color: rgba(139, 92, 246, 0.3);
+            box-shadow: 0 15px 35px rgba(139, 92, 246, 0.1);
+            transform: translateY(-2px);
+        }
+
+        .card-icon {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 3.5rem;
+            height: 3.5rem;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid var(--border-color);
+            border-radius: 14px;
+            margin-bottom: 1.5rem;
+            font-size: 1.5rem;
+            color: #a78bfa;
+        }
+
+        .card h3 {
+            font-size: 1.35rem;
+            margin-bottom: 0.75rem;
+            color: #ffffff;
+        }
+
+        .card p, .bullet-list li {
+            font-size: 0.95rem;
+            line-height: 1.6;
+            color: var(--text-muted);
+        }
+
+        /* Lists */
+        .bullet-list {
+            list-style: none;
+            margin-top: 1rem;
+        }
+
+        .bullet-list li {
+            position: relative;
+            padding-left: 1.75rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .bullet-list li::before {
+            content: "✦";
+            position: absolute;
+            left: 0;
+            top: 0;
+            color: var(--primary);
+            font-size: 1.1rem;
+        }
+
+        /* Slide Specific Custom Visuals */
+        /* Slide 1 - Funnel Visualization */
+        .funnel-container {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+            justify-content: center;
+            align-items: center;
+            background: rgba(255, 255, 255, 0.01);
+            border: 1px dashed var(--border-color);
+            border-radius: 20px;
+            padding: 2rem;
+        }
+
+        .funnel-stage {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.85rem 1.5rem;
+            border-radius: 12px;
+            font-weight: 600;
+            font-family: 'Space Grotesk', sans-serif;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .funnel-stage::before {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 0;
+            height: 100%;
+            opacity: 0.15;
+            z-index: 0;
+        }
+
+        .stage-1 { width: 100%; background: rgba(59, 130, 246, 0.1); border-color: rgba(59, 130, 246, 0.3); }
+        .stage-2 { width: 85%; background: rgba(139, 92, 246, 0.1); border-color: rgba(139, 92, 246, 0.3); }
+        .stage-3 { width: 70%; background: rgba(236, 72, 153, 0.1); border-color: rgba(236, 72, 153, 0.3); }
+        .stage-4 { width: 55%; background: rgba(16, 185, 129, 0.1); border-color: rgba(16, 185, 129, 0.3); }
+
+        .funnel-stage span { z-index: 1; }
+        .funnel-stage .stage-label { color: #ffffff; }
+        .funnel-stage .stage-count { font-size: 0.85rem; padding: 0.2rem 0.5rem; background: rgba(255, 255, 255, 0.08); border-radius: 6px; }
+
+        /* Highlight Pills */
+        .highlight-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            margin-top: 1rem;
+        }
+
+        .highlight-pill {
+            font-size: 0.8rem;
+            padding: 0.25rem 0.65rem;
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            color: #d1d5db;
+        }
+
+        /* Slide Controls Footer */
+        .presentation-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1.5rem 4rem;
+            border-top: 1px solid var(--border-color);
+            background: rgba(11, 15, 25, 0.8);
+            backdrop-filter: blur(10px);
+            z-index: 10;
+        }
+
+        .logo {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 1.2rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .controls {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+        }
+
+        .btn {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid var(--border-color);
+            color: var(--text-main);
+            width: 2.75rem;
+            height: 2.75rem;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-weight: bold;
+        }
+
+        .btn:hover {
+            background: rgba(139, 92, 246, 0.1);
+            border-color: rgba(139, 92, 246, 0.4);
+            color: #c084fc;
+        }
+
+        .btn:active {
+            transform: scale(0.95);
+        }
+
+        .slide-counter {
+            font-size: 0.9rem;
+            color: var(--text-muted);
+            font-weight: 500;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Ambient Glow Layouts -->
+    <div class="glow glow-1"></div>
+    <div class="glow glow-2"></div>
+
+    <!-- Presentation Body -->
+    <div class="presentation-container">
+        
+        <!-- Slide 1: System Overview -->
+        <div class="slide active" id="slide-1">
+            <div class="slide-header">
+                <span class="slide-badge">Slide 1 of 5</span>
+                <h1 class="slide-title">Modern Multi-Stage Hybrid Candidate Ranking Funnel</h1>
+            </div>
+            
+            <div class="grid-2">
+                <div class="card">
+                    <div class="card-icon">⚡</div>
+                    <h3>The Recruitment Paradox</h3>
+                    <p>Standard search systems rely solely on lexical keyword matches (missing context/intent) or raw semantic embeddings (which dilution scores for niche technical skills). 
+                    This project builds an end-to-end multi-stage architecture that fuses dense semantic matching, sparse exact keyword matching, and LTR machine learning features.</p>
+                    
+                    <ul class="bullet-list">
+                        <li><strong>Stage 1:</strong> Hybrid sparse & dense indexing retrieves the most matching profiles.</li>
+                        <li><strong>Stage 2:</strong> Multi-query Learning-to-Rank LTR scores structural properties.</li>
+                        <li><strong>Stage 3:</strong> Cross-Encoder deep Transformer scoring matches pure semantics.</li>
+                        <li><strong>Stage 4:</strong> MMR diversity filters candidates to prevent redundant slates.</li>
+                    </ul>
+                </div>
+                
+                <div class="funnel-container">
+                    <h3 style="font-size: 1.1rem; margin-bottom: 1rem; color: #a78bfa;">Pipeline Selection Funnel</h3>
+                    
+                    <div class="funnel-stage stage-1">
+                        <span class="stage-label">Dense (FAISS) + Sparse (BM25)</span>
+                        <span class="stage-count">N = 100,000</span>
+                    </div>
+                    <div class="funnel-stage stage-2">
+                        <span class="stage-label">RRF late-fusion retrieval</span>
+                        <span class="stage-count">N = 2,000</span>
+                    </div>
+                    <div class="funnel-stage stage-3">
+                        <span class="stage-label">XGBoost Dual-Objective LTR</span>
+                        <span class="stage-count">N = 200</span>
+                    </div>
+                    <div class="funnel-stage stage-4">
+                        <span class="stage-label">CrossEncoder + MMR Diversity</span>
+                        <span class="stage-count">N = 100</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 2: Data Preprocessing & Offline Distillation -->
+        <div class="slide" id="slide-2">
+            <div class="slide-header">
+                <span class="slide-badge">Slide 2 of 5</span>
+                <h1 class="slide-title">Offline Knowledge Distillation & Feature Engineering</h1>
+            </div>
+            
+            <div class="grid-3">
+                <!-- Feature Card -->
+                <div class="card">
+                    <div class="card-icon">⚙️</div>
+                    <h3>Tabular Engineering</h3>
+                    <p>Normalization parsed from JSONL to SQLite. We extract <strong>46 structural candidate features</strong> including:</p>
+                    <ul class="bullet-list" style="font-size: 0.85rem;">
+                        <li><strong>Career continuity & stability:</strong> Job change frequency, career gaps, promotion velocity.</li>
+                        <li><strong>Education:</strong> Academic tiering (Tier 1 vs. rest), GPA strength.</li>
+                        <li><strong>Logistics:</strong> Notice period, salary expectations.</li>
+                    </ul>
+                </div>
+
+                <!-- Teacher Card -->
+                <div class="card">
+                    <div class="card-icon">🧠</div>
+                    <h3>Knowledge Distillation</h3>
+                    <p>LTR requires high-quality relevance scores which manual recruitment databases lack. We distill relevance labels using an offline teacher:</p>
+                    <ul class="bullet-list" style="font-size: 0.85rem;">
+                        <li><strong>Neural Teacher:</strong> High-capacity transformer model (ms-marco-MiniLM-L-6-v2) scores full profiles.</li>
+                        <li><strong>Quantile Binning:</strong> Continuous scores binned into discrete classes [0, 1, 2, 3] representing mismatch to outstanding profiles.</li>
+                    </ul>
+                </div>
+
+                <!-- Hardening Card -->
+                <div class="card">
+                    <div class="card-icon">🛡️</div>
+                    <h3>Adversarial Defense</h3>
+                    <p>Modern recruitment databases face prompt-injections, spam profiles, and resume keyword-stuffing.</p>
+                    <ul class="bullet-list" style="font-size: 0.85rem;">
+                        <li><strong>Honeypot flags:</strong> Detection algorithms look for hidden prompt-stuffing flags.</li>
+                        <li><strong>Adversarial Penalty:</strong> Detected honeypots are forced to score 0 relevance in distillation to train the LTR student models to penalize adversarial behavior.</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 3: Online Inference & Decision Engine -->
+        <div class="slide" id="slide-3">
+            <div class="slide-header">
+                <span class="slide-badge">Slide 3 of 5</span>
+                <h1 class="slide-title">The Real-Time Ranking & Explainability Engine</h1>
+            </div>
+            
+            <div class="grid-2">
+                <div class="card">
+                    <div class="card-icon">🔮</div>
+                    <h3>Dual-Objective Scoring & Blending</h3>
+                    <p>The ranking engine uses predictions from the XGBoost models trained on the distilled dataset:</p>
+                    <ul class="bullet-list">
+                        <li><strong>Pairwise + NDCG Ensemble:</strong> Combines a pairwise ranker (minimizes relative swaps) and listwise ranker (NDCG optimizer).</li>
+                        <li><strong>Deep Semantic Fusion:</strong> The top LTR candidates are scored by the Cross-Encoder model. The final score is a <strong>50% structural features (LTR) + 50% semantic relevance (Cross-Encoder)</strong> blend.</li>
+                    </ul>
+                </div>
+                
+                <div class="card">
+                    <div class="card-icon">🎭</div>
+                    <h3>Diversity & Explainable Decisions</h3>
+                    <p>Once scored, candidates are filtered using post-processing engines to ensure they are high-quality, diverse, and transparent:</p>
+                    <ul class="bullet-list">
+                        <li><strong>MMR Diversity (λ=0.85):</strong> Maximizes candidate relevance while penalizing similarity to already selected profiles. Prevents presenting 100 identical candidates.</li>
+                        <li><strong>Structured Explainability:</strong> Formulates candidate justifications in natural language: listing skills matched, skills missing, risk indicators (long notice, hop index), and confidence.</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 4: Results & Performance -->
+        <div class="slide" id="slide-4">
+            <div class="slide-header">
+                <span class="slide-badge">Slide 4 of 5</span>
+                <h1 class="slide-title">Results & Performance</h1>
+            </div>
+            
+            <div class="grid-2">
+                <div class="card">
+                    <div class="card-icon">📈</div>
+                    <h3>Results</h3>
+                    <ul class="bullet-list">
+                        <li><strong>JD Relevance:</strong> Successfully ranks candidates according to target Job Description relevance.</li>
+                        <li><strong>Improved Prioritization:</strong> Hybrid ranking (structural + semantic) helps prioritize best candidates first.</li>
+                        <li><strong>Recruiter Validation:</strong> Transparent explainability scoring builds user trust and enables immediate validation.</li>
+                    </ul>
+                </div>
+                
+                <div class="card">
+                    <div class="card-icon">🚀</div>
+                    <h3>Performance</h3>
+                    <ul class="bullet-list">
+                        <li><strong>Fast Retrieval:</strong> FAISS index search scans candidates in milliseconds.</li>
+                        <li><strong>Cached Embeddings:</strong> Section embeddings are pre-calculated once and reused at query time, saving compute.</li>
+                        <li><strong>Lightweight Streamlit UI:</strong> A minimal web dashboard enables fast, responsive user interaction.</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 5: Technologies Used -->
+        <div class="slide" id="slide-5">
+            <div class="slide-header">
+                <span class="slide-badge">Slide 5 of 5</span>
+                <h1 class="slide-title">Technologies Used</h1>
+            </div>
+            
+            <div class="card" style="margin-bottom: 2rem; padding: 1.5rem;">
+                <p style="font-style: italic;">What technologies, frameworks, and tools were used and why were they selected for this solution?</p>
+            </div>
+            
+            <div class="grid-2">
+                <div class="card">
+                    <ul class="bullet-list" style="margin-top: 0;">
+                        <li><strong>FAISS (Facebook AI Similarity Search):</strong> Selected for high-speed dense semantic similarity retrieval over section embeddings.</li>
+                        <li><strong>BM25 (Rank-BM25):</strong> Selected to ensure exact keyword match for specific developer skills, preventing dilution.</li>
+                        <li><strong>XGBoost (XGBRanker):</strong> Fast and powerful student LTR ranker that fits non-linear combinations of 46 features.</li>
+                    </ul>
+                </div>
+                
+                <div class="card">
+                    <ul class="bullet-list" style="margin-top: 0;">
+                        <li><strong>SentenceTransformers:</strong> BGE-base-en-v1.5 and ms-marco-MiniLM-L-6-v2 select dense semantics and CrossEncoder matching.</li>
+                        <li><strong>SQLite (Relational Storage):</strong> Serverless, simple SQL db for fast candidates metadata & features retrieval.</li>
+                        <li><strong>Streamlit (Recruiter Portal):</strong> Provides a lightweight, python-native UI wrapper for prompt query exploration.</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Footer Controls -->
+    <div class="presentation-footer">
+        <div class="logo">AI Candidate Ranking System</div>
+        
+        <div class="controls">
+            <button class="btn" id="prev-btn" onclick="prevSlide()">&larr;</button>
+            <span class="slide-counter" id="slide-indicator">Slide 1 / 5</span>
+            <button class="btn" id="next-btn" onclick="nextSlide()">&rarr;</button>
+        </div>
+    </div>
+
+    <!-- Presentation Navigation Script -->
+    <script>
+        let currentSlide = 1;
+        const totalSlides = 5;
+
+        function updateSlideVisibility() {
+            // Hide all slides
+            for (let i = 1; i <= totalSlides; i++) {
+                document.getElementById(`slide-${i}`).classList.remove('active');
+            }
+            // Show current
+            document.getElementById(`slide-${currentSlide}`).classList.add('active');
+            // Update counter text
+            document.getElementById('slide-indicator').innerText = `Slide ${currentSlide} / ${totalSlides}`;
+        }
+
+        function nextSlide() {
+            if (currentSlide < totalSlides) {
+                currentSlide++;
+            } else {
+                currentSlide = 1; // Wrap around
+            }
+            updateSlideVisibility();
+        }
+
+        function prevSlide() {
+            if (currentSlide > 1) {
+                currentSlide--;
+            } else {
+                currentSlide = totalSlides; // Wrap around
+            }
+            updateSlideVisibility();
+        }
+
+        // Support keyboard arrow keys navigation
+        document.addEventListener('keydown', function(event) {
+            if (event.key === 'ArrowRight' || event.key === ' ') {
+                nextSlide();
+            } else if (event.key === 'ArrowLeft') {
+                prevSlide();
+            }
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,11 @@
+venv/
+.env
+__pycache__/
+*.pyc
+
+Dataset and references/
+data/*.db
+data/*.jsonl
+embeddings/*.npy
+embeddings/*.pkl
+embeddings/*.index

@@ -1,0 +1,12 @@
+
+sentence-transformers
+torch
+faiss-cpu
+numpy
+pandas
+scikit-learn
+PyPDF2
+rank_bm25
+xgboost
+python-docx
+streamlit
